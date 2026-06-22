@@ -1,7 +1,10 @@
 import React from 'react';
-import { IconButton, Avatar, Badge, Icon, YData } from '../ds';
-
-const { categories } = YData;
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { IconButton, Avatar, Icon } from '../ds';
+import { listCategories } from '../api/categories.js';
+import { getUnreadCount } from '../api/notifications.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 
 const shellCSS = `
 .ysh{position:sticky;top:0;z-index:50;font-family:var(--font-sans);}
@@ -24,14 +27,51 @@ const shellCSS = `
 .ysh__cat{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:all var(--dur-fast);border:1px solid transparent;}
 .ysh__cat:hover{background:var(--surface-sunken);color:var(--text-strong);}
 .ysh__cat--active{background:var(--brand-subtle);color:var(--brand);}
-.ysh__catcount{font-family:var(--font-mono);font-size:11px;opacity:.7;}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = shellCSS; document.head.appendChild(s); } }
 
+function readUnread(data) {
+  if (!data) return 0;
+  if (typeof data.unread === 'number') return data.unread;
+  if (typeof data.count === 'number') return data.count;
+  const first = Object.values(data)[0];
+  return typeof first === 'number' ? first : 0;
+}
+
 // `user` is null for a guest session, or { name, verified } for an authed one.
-export default function AppShell({ activeCat, onCat, onNav, onLogout, unread = 3, user = null }) {
+export default function AppShell({ onNav, onLogout, user = null }) {
   ensure();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeCat = searchParams.get('category') || null;
+
+  const catsQ = useFetch((signal) => listCategories({ signal }), []);
+  const categories = catsQ.data || [];
+
+  // Unread badge — only meaningful for an authed user; refreshed periodically.
+  const unreadQ = useFetch((signal) => getUnreadCount({ signal }), [!!user], { enabled: !!user });
+  const unread = readUnread(unreadQ.data);
+  React.useEffect(() => {
+    if (!user) return undefined;
+    const t = setInterval(() => unreadQ.refetch(), 30000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Debounced search -> navigate Home with ?q=.
+  const [term, setTerm] = React.useState(searchParams.get('q') || '');
+  const debounced = useDebounce(term, 400);
+  const lastPushed = React.useRef(searchParams.get('q') || '');
+  React.useEffect(() => {
+    if (debounced === lastPushed.current) return;
+    lastPushed.current = debounced;
+    navigate(debounced ? `/?q=${encodeURIComponent(debounced)}` : '/');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced]);
+
+  const goCategory = (name) => navigate(name ? `/?category=${encodeURIComponent(name)}` : '/');
+
   return (
     <div className="ysh">
       <div className="ysh__bar">
@@ -40,7 +80,12 @@ export default function AppShell({ activeCat, onCat, onNav, onLogout, unread = 3
         </div>
         <label className="ysh__search">
           <Icon.Search size={18} />
-          <input placeholder="Buscar Charizard, Funko, comics…" />
+          <input
+            placeholder="Buscar Charizard, Funko, comics…"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') navigate(term ? `/?q=${encodeURIComponent(term)}` : '/'); }}
+          />
         </label>
         <div className="ysh__actions">
           {user ? (
@@ -48,10 +93,9 @@ export default function AppShell({ activeCat, onCat, onNav, onLogout, unread = 3
               <button className="ysh__sell" onClick={() => onNav && onNav('seller')}>
                 <Icon.Plus size={17} /> Vender
               </button>
-              <IconButton label="Notificaciones" variant="ghost" badge={unread} onClick={() => onNav && onNav('notifications')}>
+              <IconButton label="Notificaciones" variant="ghost" badge={unread || undefined} onClick={() => onNav && onNav('notifications')}>
                 <Icon.Bell size={20} />
               </IconButton>
-              <IconButton label="Favoritos" variant="ghost"><Icon.Heart size={20} /></IconButton>
               <div className="ysh__user" onClick={() => onNav && onNav('profile')}>
                 <Avatar name={user.name} verified={user.verified} size="sm" />
                 <span className="ysh__uname">{user.name.split(' ')[0]}</span>
@@ -69,12 +113,12 @@ export default function AppShell({ activeCat, onCat, onNav, onLogout, unread = 3
         </div>
       </div>
       <div className="ysh__nav">
-        <span className={`ysh__cat${!activeCat ? ' ysh__cat--active' : ''}`} onClick={() => onCat && onCat(null)}>
+        <span className={`ysh__cat${!activeCat ? ' ysh__cat--active' : ''}`} onClick={() => goCategory(null)}>
           <Icon.LayoutGrid size={15} /> Todo
         </span>
         {categories.map((c) => (
-          <span key={c.name} className={`ysh__cat${activeCat === c.name ? ' ysh__cat--active' : ''}`} onClick={() => onCat && onCat(c.name)}>
-            {c.name} <span className="ysh__catcount">{c.count.toLocaleString('es-PE')}</span>
+          <span key={c.id} className={`ysh__cat${activeCat === c.name ? ' ysh__cat--active' : ''}`} onClick={() => goCategory(c.name)}>
+            {c.name}
           </span>
         ))}
       </div>

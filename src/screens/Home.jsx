@@ -71,6 +71,7 @@ export default function HomeScreen({ onOpenAuction }) {
   const { page, size, sort, get, setParams, setPage } = usePaginatedQuery({ defaultSize: 12, defaultSort: 'createdAt,desc' });
 
   const condition = get('condition');
+  const category = get('category');
   const q = get('q');
   // Local state for the debounced price inputs (keeps typing snappy, hits the API on quiet).
   const [priceDraft, setPriceDraft] = React.useState({ min: get('minPrice'), max: get('maxPrice') });
@@ -96,13 +97,14 @@ export default function HomeScreen({ onOpenAuction }) {
         size,
         sort,
         mode: 'AUCTION',
+        category: category || undefined,
         condition: condition || undefined,
         minPrice: minPrice || undefined,
         maxPrice: maxPrice || undefined,
         q: q || undefined,
         signal,
       }),
-    [page, size, sort, condition, minPrice, maxPrice, q],
+    [page, size, sort, category, condition, minPrice, maxPrice, q],
   );
 
   const items = data?.content || [];
