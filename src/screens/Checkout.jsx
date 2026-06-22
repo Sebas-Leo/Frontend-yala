@@ -94,7 +94,7 @@ export default function Checkout({ role = 'buyer', onBack }) {
           </div>
           <div className="yc__pay">
             {role === 'buyer' && o.status === 'PENDING' && (<>
-              <div className="yc__stripe"><Icon.CreditCard size={16} /> Pago seguro con Stripe</div>
+              <div className="yc__stripe"><Icon.CreditCard size={16} /> Pago seguro con MercadoPago</div>
               <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.CreditCard size={18} />}>Pagar S/. {price.toLocaleString('es-PE')}</Button>
               <Button variant="ghost" size="sm" fullWidth>Cancelar orden</Button>
             </>)}

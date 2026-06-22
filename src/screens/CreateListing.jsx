@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Textarea, Select, Radio, Tag, Button, Icon } from '../ds';
+import { Input, Textarea, Select, Tag, Button, Icon } from '../ds';
 
 const css = `
 .cl{max-width:720px;margin:0 auto;padding:24px;}
@@ -27,15 +27,14 @@ const SUGGESTED_TAGS = ['1ª edición', 'Holográfica', 'Edición limitada', 'Se
 
 export default function CreateListing({ onBack, onCreate }) {
   ensure();
-  const [mode, setMode] = React.useState('FIXED');
   const [tags, setTags] = React.useState([]);
   const toggleTag = (t) => setTags((x) => x.includes(t) ? x.filter((y) => y !== t) : [...x, t]);
 
   return (
     <div className="cl">
       <div className="cl__back" onClick={onBack}><Icon.ChevronLeft size={16} /> Panel del vendedor</div>
-      <div className="cl__h1">Nueva publicación</div>
-      <div className="cl__sub">Mostrá tu coleccionable con buenas fotos y una descripción clara.</div>
+      <div className="cl__h1">Nueva subasta · Paso 1 de 2</div>
+      <div className="cl__sub">El ítem: mostrá tu coleccionable con buenas fotos y una descripción clara.</div>
 
       <form className="cl__card" onSubmit={(e) => { e.preventDefault(); onCreate && onCreate(); }}>
         <Input label="Título" placeholder="Charizard Base Set Holo — 1ª edición" hint="Mínimo 10 caracteres." required />
@@ -46,20 +45,7 @@ export default function CreateListing({ onBack, onCreate }) {
           <Select label="Condición / PSA" options={CONDITIONS} placeholder="Elegí la condición" style={{ flex: 1, minWidth: 0 }} required />
         </div>
 
-        <div>
-          <div className="cl__lbl">Modo de venta</div>
-          <div className="cl__radios">
-            <label className={`cl__radio${mode === 'FIXED' ? ' cl__radio--on' : ''}`}>
-              <Radio name="mode" checked={mode === 'FIXED'} onChange={() => setMode('FIXED')} label="Precio fijo" sublabel="Se vende al precio que pongas" />
-            </label>
-            <label className={`cl__radio${mode === 'AUCTION' ? ' cl__radio--on' : ''}`}>
-              <Radio name="mode" checked={mode === 'AUCTION'} onChange={() => setMode('AUCTION')} label="Subasta" sublabel="Definís precio inicial y duración" />
-            </label>
-          </div>
-        </div>
-
-        {mode === 'FIXED' && <Input label="Precio (S/.)" prefix="S/." mono placeholder="0.00" required />}
-        {mode === 'AUCTION' && <div className="cl__hint"><Icon.Gavel size={14} style={{ flex: 'none', marginTop: 1 }} /> El precio inicial y la duración (1/3/5/7 días) los configurás en el paso de subasta, después de crear la publicación.</div>}
+        <div className="cl__hint"><Icon.Gavel size={14} style={{ flex: 'none', marginTop: 1 }} /> En Yala todo se vende por subasta. El precio inicial y la duración (1/3/5/7 días) los definís en el paso 2.</div>
 
         <div>
           <div className="cl__lbl">Etiquetas</div>
@@ -80,7 +66,7 @@ export default function CreateListing({ onBack, onCreate }) {
 
         <div className="cl__hint"><Icon.LayoutGrid size={13} style={{ flex: 'none', marginTop: 1 }} /> Podés tener hasta 20 publicaciones activas a la vez.</div>
 
-        <Button variant="primary" size="lg" fullWidth type="submit">Publicar</Button>
+        <Button variant="primary" size="lg" fullWidth type="submit">Continuar al paso 2</Button>
       </form>
     </div>
   );

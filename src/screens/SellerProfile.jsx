@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Avatar, ReputationStars, Tabs, ListingCard, Button, Icon, YData } from '../ds';
+import { Avatar, ReputationStars, Tabs, AuctionCard, Icon, YData } from '../ds';
 
-const { sellers, listings } = YData;
+const { sellers, auctions } = YData;
 
 const REVIEWS = [
   { id: 'r1', author: 'collector_lima', rating: 5, comment: 'Carta tal cual la foto, embalaje impecable. Llegó antes de lo previsto.', date: '8 jun 2026' },
@@ -34,13 +34,13 @@ const css = `
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
-export default function SellerProfile({ onBack, onOpenListing }) {
+export default function SellerProfile({ onBack, onOpenAuction }) {
   ensure();
   const { id } = useParams();
   const s = sellers[id] || sellers.marco;
-  const [tab, setTab] = React.useState('listings');
-  const sellerListings = listings.filter((l) => l.seller.id === s.id);
-  const shown = sellerListings.length ? sellerListings : listings.slice(0, 4);
+  const [tab, setTab] = React.useState('auctions');
+  const sellerAuctions = auctions.filter((a) => a.seller.id === s.id);
+  const shown = sellerAuctions.length ? sellerAuctions : auctions.slice(0, 4);
 
   return (
     <div className="sp">
@@ -61,16 +61,16 @@ export default function SellerProfile({ onBack, onOpenListing }) {
       </div>
 
       <Tabs value={tab} onChange={setTab} tabs={[
-        { value: 'listings', label: 'Publicaciones', count: shown.length },
+        { value: 'auctions', label: 'Subastas', count: shown.length },
         { value: 'reviews', label: 'Reseñas', count: s.reviews },
       ]} />
 
-      {tab === 'listings' ? (
+      {tab === 'auctions' ? (
         <div className="sp__grid">
-          {shown.map((l) => (
-            <ListingCard key={l.id} image={l.img} title={l.title} condition={l.cond} price={l.price}
-              sellerName={l.seller.name} sellerVerified={l.seller.verified} sellerRating={l.seller.rating}
-              as="a" href="#" onClick={(e) => { e.preventDefault(); onOpenListing && onOpenListing(l.id); }} />
+          {shown.map((a) => (
+            <AuctionCard key={a.id} image={a.img} title={a.title} currentBid={a.bid} bidsCount={a.bids}
+              endsAt={a.endsAt} status={a.status} sellerName={a.seller.name} sellerVerified={a.seller.verified}
+              as="a" href="#" onClick={(e) => { e.preventDefault(); onOpenAuction && onOpenAuction(a.id); }} />
           ))}
         </div>
       ) : (

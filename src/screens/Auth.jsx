@@ -39,8 +39,8 @@ export default function Auth({ onAuth }) {
     setError(null);
     setBusy(true);
     try {
-      await action();
-      if (onAuth) onAuth();
+      const profile = await action();
+      if (onAuth) onAuth(profile);
     } catch (err) {
       setError((err && err.message) || 'No pudimos completar la operación. Intentá de nuevo.');
     } finally {
@@ -63,7 +63,7 @@ export default function Auth({ onAuth }) {
     <div className="au">
       <div className="au__brand">
         <img src="/assets/yala-logo.svg" alt="Yala" />
-        <div className="au__sub">Subastas y venta directa de coleccionables geek.</div>
+        <div className="au__sub">Subastas de coleccionables geek.</div>
       </div>
       <div className="au__card">
         <Tabs value={tab} onChange={switchTab} tabs={[

@@ -8,9 +8,33 @@ import * as authApi from '../api/auth.js';
 
 const AuthContext = React.createContext(null);
 
+// The backend has no buyer identity field, so the "DNI verified" flag lives on
+// the client (set after a successful Didit check). Persisted so it survives a
+// reload during the demo; cleared on logout.
+const IDENTITY_KEY = 'yala.identityVerified';
+const readIdentity = () => {
+  try {
+    return localStorage.getItem(IDENTITY_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [identityVerified, setIdentityVerifiedState] = React.useState(readIdentity);
+
+  const setIdentityVerified = React.useCallback((value) => {
+    const next = !!value;
+    setIdentityVerifiedState(next);
+    try {
+      if (next) localStorage.setItem(IDENTITY_KEY, 'true');
+      else localStorage.removeItem(IDENTITY_KEY);
+    } catch {
+      /* localStorage unavailable — keep it in memory only */
+    }
+  }, []);
 
   React.useEffect(() => {
     let alive = true;
@@ -52,7 +76,8 @@ export function AuthProvider({ children }) {
   const logout = React.useCallback(() => {
     authApi.logout();
     setUser(null);
-  }, []);
+    setIdentityVerified(false);
+  }, [setIdentityVerified]);
 
   const value = React.useMemo(
     () => ({
@@ -60,12 +85,14 @@ export function AuthProvider({ children }) {
       loading,
       isAuthenticated: !!user,
       isVerifiedSeller: !!(user && user.isVerifiedSeller),
+      isIdentityVerified: identityVerified,
+      setIdentityVerified,
       role: user ? user.role : null,
       login,
       register,
       logout,
     }),
-    [user, loading, login, register, logout],
+    [user, loading, identityVerified, setIdentityVerified, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

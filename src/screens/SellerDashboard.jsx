@@ -1,7 +1,7 @@
 import React from 'react';
-import { Price, Tabs, Button, ListingCard, AuctionCard, StatusBadge, Icon, YData } from '../ds';
+import { Price, Tabs, Button, AuctionCard, StatusBadge, Icon, YData } from '../ds';
 
-const { listings, auctions, orders, sellerMetrics } = YData;
+const { auctions, orders, sellerMetrics } = YData;
 
 const css = `
 .yd{max-width:1280px;margin:0 auto;padding:24px;}
@@ -46,9 +46,9 @@ function Metric({ icon, bg, color, label, value, foot, bar }) {
 
 export default function SellerDashboard({ onNew, onOpenAuction, onOpenOrder }) {
   ensure();
-  const [tab, setTab] = React.useState('listings');
+  const [tab, setTab] = React.useState('auctions');
   const m = sellerMetrics;
-  const myListings = listings.slice(0, 7);
+  const myAuctions = auctions.slice(0, 6);
   const sellerOrders = orders.slice(0, 4);
 
   return (
@@ -58,7 +58,7 @@ export default function SellerDashboard({ onNew, onOpenAuction, onOpenOrder }) {
           <div className="yd__h1">Panel del vendedor</div>
           <div className="yd__sub">Hola Marco — esto es lo que pasa con tu tienda hoy.</div>
         </div>
-        <Button variant="primary" iconLeft={<Icon.Plus size={17} />} onClick={onNew}>Nueva publicación</Button>
+        <Button variant="primary" iconLeft={<Icon.Plus size={17} />} onClick={onNew}>Nueva subasta</Button>
       </div>
 
       <div className="yd__metrics">
@@ -67,32 +67,22 @@ export default function SellerDashboard({ onNew, onOpenAuction, onOpenOrder }) {
         <Metric icon={<Icon.Wallet size={20} />} bg="var(--success-bg)" color="var(--success)"
           label="Neto (92%)" value={`S/. ${m.net.toLocaleString('es-PE')}`} foot={`Comisión Yala: S/. ${m.commission.toLocaleString('es-PE')}`} />
         <Metric icon={<Icon.LayoutGrid size={20} />} bg="var(--info-bg)" color="var(--info)"
-          label="Publicaciones activas" value={`${m.activeListings} / ${m.maxListings}`} bar={(m.activeListings / m.maxListings) * 100} foot={`${m.maxListings - m.activeListings} cupos libres`} />
+          label="Ítems activos" value={`${m.activeListings} / ${m.maxListings}`} bar={(m.activeListings / m.maxListings) * 100} foot={`${m.maxListings - m.activeListings} cupos libres`} />
         <Metric icon={<Icon.Gavel size={20} />} bg="var(--live-subtle)" color="var(--live-hover)"
           label="Subastas en curso" value={m.activeAuctions} foot="2 cierran hoy" />
       </div>
 
       <div className="yd__tabs">
         <Tabs value={tab} onChange={setTab} tabs={[
-          { value: 'listings', label: 'Mis publicaciones', count: m.activeListings },
           { value: 'auctions', label: 'Mis subastas', count: m.activeAuctions },
           { value: 'orders', label: 'Órdenes como vendedor', count: 8 },
         ]} />
       </div>
 
-      {tab === 'listings' && (
-        <div className="yd__grid">
-          <div className="yd__addcard" onClick={onNew}><Icon.Plus size={28} /><span style={{ fontWeight: 600, fontSize: 14 }}>Nueva publicación</span></div>
-          {myListings.map((l, i) => (
-            <ListingCard key={l.id} image={l.img} title={l.title} condition={l.cond} price={l.price}
-              status={i === 0 ? 'ACTIVE' : i === 4 ? 'SOLD' : i === 6 ? 'DRAFT' : 'ACTIVE'} />
-          ))}
-        </div>
-      )}
-
       {tab === 'auctions' && (
         <div className="yd__grid">
-          {auctions.slice(0, 3).map((a) => (
+          <div className="yd__addcard" onClick={onNew}><Icon.Plus size={28} /><span style={{ fontWeight: 600, fontSize: 14 }}>Nueva subasta</span></div>
+          {myAuctions.map((a) => (
             <AuctionCard key={a.id} image={a.img} title={a.title} currentBid={a.bid} bidsCount={a.bids}
               endsAt={a.endsAt} status={a.status} sellerName={a.seller.name} sellerVerified={a.seller.verified}
               as="a" onClick={(e) => { e.preventDefault(); onOpenAuction && onOpenAuction(a.id); }} href="#" />
