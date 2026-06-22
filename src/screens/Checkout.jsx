@@ -1,7 +1,12 @@
 import React from 'react';
-import { Price, Countdown, OrderStepper, StatusBadge, Button, Avatar, Icon, YData } from '../ds';
-
-const { checkoutOrder } = YData;
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Price, Countdown, OrderStepper, StatusBadge, Button, Avatar, EmptyState, Skeleton, Icon } from '../ds';
+import { getOrder, confirmOrder, cancelOrder } from '../api/orders.js';
+import { createPreference } from '../api/payments.js';
+import { orderFromDto } from '../api/adapters.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 const css = `
 .yc{max-width:1080px;margin:0 auto;padding:24px;}
@@ -29,7 +34,6 @@ const css = `
 .yc__pay{padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;}
 .yc__stripe{display:flex;align-items:center;gap:8px;border:1px solid var(--border-default);border-radius:var(--radius-md);padding:13px 14px;font-size:13px;color:var(--text-muted);}
 .yc__note{font-size:12px;color:var(--text-subtle);text-align:center;display:flex;align-items:center;gap:6px;justify-content:center;}
-.yc__track{padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-family:var(--font-mono);color:var(--text-body);background:var(--info-bg);border-radius:var(--radius-md);margin:0 18px 16px;}
 @media(max-width:880px){.yc__grid{grid-template-columns:1fr}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
@@ -38,12 +42,91 @@ function Row({ label, children, comm }) {
   return <div className="yc__srow"><span className={comm ? 'yc__comm' : ''}>{label}</span><span>{children}</span></div>;
 }
 
-export default function Checkout({ role = 'buyer', onBack }) {
+// Orders carry no payment deadline field; the rule is 48h from creation.
+function payByFrom(createdAt) {
+  const t = new Date(createdAt).getTime();
+  return Number.isNaN(t) ? null : new Date(t + 48 * 3600 * 1000);
+}
+
+export default function Checkout({ onBack }) {
   ensure();
-  const o = checkoutOrder;
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get('orderId');
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const toast = useToast();
+  const [busy, setBusy] = React.useState(false);
+
+  const { data, loading, error, refetch } = useFetch(
+    (signal) => getOrder(orderId, { signal }),
+    [orderId],
+    { enabled: !!orderId },
+  );
+
+  const o = data ? orderFromDto(data, user?.id) : null;
+
+  const pay = async () => {
+    setBusy(true);
+    try {
+      const pref = await createPreference({ orderId: Number(orderId) });
+      if (pref?.initPoint) {
+        window.location.href = pref.initPoint;
+      } else {
+        toast.error('Pago no disponible', 'No recibimos el enlace de pago. Intentá más tarde.');
+      }
+    } catch (err) {
+      toast.error('No se pudo iniciar el pago', err.message || 'Intentá nuevamente.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doCancel = async () => {
+    setBusy(true);
+    try {
+      await cancelOrder(orderId);
+      toast.success('Orden cancelada', 'La orden fue cancelada.');
+      refetch();
+    } catch (err) {
+      toast.error('No se pudo cancelar', err.message || 'Intentá nuevamente.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doConfirm = async () => {
+    setBusy(true);
+    try {
+      await confirmOrder(orderId);
+      toast.success('Orden confirmada', 'Confirmaste la venta.');
+      refetch();
+    } catch (err) {
+      toast.error('No se pudo confirmar', err.message || 'Intentá nuevamente.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!orderId) {
+    return <div className="yc"><EmptyState icon={<Icon.Inbox size={26} />} title="Orden no especificada"
+      description="Volvé a tus órdenes y elegí una." actions={<Button onClick={() => navigate('/orders')}>Mis órdenes</Button>} /></div>;
+  }
+  if (loading) {
+    return <div className="yc"><Skeleton style={{ height: 80, borderRadius: 12, marginBottom: 18 }} />
+      <div className="yc__grid"><Skeleton style={{ height: 200, borderRadius: 12 }} /><Skeleton style={{ height: 240, borderRadius: 12 }} /></div></div>;
+  }
+  if (error || !o) {
+    return <div className="yc"><EmptyState icon={<Icon.AlertTriangle size={26} />} title="No pudimos cargar la orden"
+      description={error?.message || 'La orden no existe o no tenés acceso.'}
+      actions={<Button variant="secondary" onClick={() => navigate('/orders')}>Mis órdenes</Button>} /></div>;
+  }
+
+  const isSeller = o.role === 'seller';
   const price = o.amount;
   const commission = Math.round(price * 0.08);
   const net = price - commission;
+  const payBy = payByFrom(o.createdAt);
+  const cancelled = o.status === 'CANCELLED';
 
   return (
     <div className="yc">
@@ -53,56 +136,57 @@ export default function Checkout({ role = 'buyer', onBack }) {
         <StatusBadge kind="order" status={o.status} size="md" />
       </div>
 
-      <div className="yc__stepper"><OrderStepper current={o.status} /></div>
+      <div className="yc__stepper"><OrderStepper current={cancelled ? 'PENDING' : o.status} cancelled={cancelled} /></div>
 
       <div className="yc__grid">
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {o.status === 'PENDING' && (
+          {o.status === 'PENDING' && !isSeller && payBy && (
             <div className="yc__deadline">
               <div className="yc__dlicon"><Icon.Clock size={22} /></div>
               <div style={{ flex: 1 }}>
                 <div className="yc__dltt">Tenés 48h para completar el pago</div>
                 <div className="yc__dlsub">Si no pagás a tiempo, la orden se ofrece al 2º mejor postor.</div>
               </div>
-              <Countdown endsAt={o.payBy} variant="order" format="inline" />
+              <Countdown endsAt={payBy} variant="order" format="inline" />
             </div>
           )}
           <div className="yc__panel">
             <div className="yc__ptt"><Icon.Package size={16} /> Ítem</div>
             <div className="yc__item">
-              <img className="yc__itimg" src={o.img} alt={o.title} />
+              <img className="yc__itimg" src={o.image} alt={o.title} />
               <div className="yc__itinfo">
                 <div className="yc__ittitle">{o.title}</div>
-                <div className="yc__itseller"><Avatar name={o.party} verified size="xs" /> {o.party}</div>
+                <div className="yc__itseller"><Avatar name={o.party} size="xs" /> {o.party}</div>
                 <div style={{ marginTop: 8 }}><Price value={price} size="md" /></div>
               </div>
             </div>
-            {o.status === 'IN_TRANSIT' && (
-              <div className="yc__track"><Icon.Truck size={16} /> Tracking: {o.tracking || 'OLVA-PE-8842193'}</div>
-            )}
           </div>
         </div>
 
         <div className="yc__panel">
-          <div className="yc__ptt"><Icon.Wallet size={16} /> {role === 'seller' ? 'Tu liquidación' : 'Resumen de pago'}</div>
+          <div className="yc__ptt"><Icon.Wallet size={16} /> {isSeller ? 'Tu liquidación' : 'Resumen de pago'}</div>
           <div className="yc__sum">
             <Row label="Precio del ítem"><Price value={price} size="sm" /></Row>
-            <Row label="Comisión Yala (8%)" comm><span style={{ fontFamily: 'var(--font-mono)', color: role === 'seller' ? 'var(--error)' : 'var(--text-muted)' }}>{role === 'seller' ? '−' : ''} S/. {commission.toLocaleString('es-PE')}</span></Row>
-            {role === 'seller'
+            <Row label="Comisión Yala (8%)" comm><span style={{ fontFamily: 'var(--font-mono)', color: isSeller ? 'var(--error)' : 'var(--text-muted)' }}>{isSeller ? '−' : ''} S/. {commission.toLocaleString('es-PE')}</span></Row>
+            {isSeller
               ? <div className="yc__srow yc__srow--total"><span>Recibís (92%)</span><Price value={net} size="md" /></div>
               : <div className="yc__srow yc__srow--total"><span>Total a pagar</span><Price value={price} size="md" /></div>}
           </div>
           <div className="yc__pay">
-            {role === 'buyer' && o.status === 'PENDING' && (<>
+            {!isSeller && o.status === 'PENDING' && (<>
               <div className="yc__stripe"><Icon.CreditCard size={16} /> Pago seguro con MercadoPago</div>
-              <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.CreditCard size={18} />}>Pagar S/. {price.toLocaleString('es-PE')}</Button>
-              <Button variant="ghost" size="sm" fullWidth>Cancelar orden</Button>
+              <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.CreditCard size={18} />} onClick={pay} disabled={busy}>
+                {busy ? 'Procesando…' : `Pagar S/. ${price.toLocaleString('es-PE')}`}
+              </Button>
+              <Button variant="ghost" size="sm" fullWidth onClick={doCancel} disabled={busy}>Cancelar orden</Button>
             </>)}
-            {role === 'buyer' && o.status === 'IN_TRANSIT' && (
-              <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.Check size={18} />}>Confirmar recepción</Button>
+            {isSeller && o.status === 'PENDING' && (
+              <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.Check size={18} />} onClick={doConfirm} disabled={busy}>
+                {busy ? 'Confirmando…' : 'Confirmar venta'}
+              </Button>
             )}
-            {role === 'seller' && o.status === 'CONFIRMED' && (
-              <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.Truck size={18} />}>Marcar como enviado</Button>
+            {o.status === 'CONFIRMED' && !isSeller && (
+              <Button variant="secondary" size="lg" fullWidth iconLeft={<Icon.Star size={18} />} onClick={() => navigate('/review/' + o.id)}>Dejar reseña</Button>
             )}
             <div className="yc__note"><Icon.Shield size={13} /> Protegido por Yala hasta la entrega</div>
           </div>
