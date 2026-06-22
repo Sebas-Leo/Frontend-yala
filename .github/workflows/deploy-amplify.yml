@@ -1,0 +1,69 @@
+name: Deploy frontend to AWS Amplify
+
+# Builds the Vite app and ships the artifact to AWS Amplify Hosting on every
+# push to main (and on demand). Uses Amplify "manual deployment": we build here,
+# zip dist/, then create + start a deployment via the AWS CLI. No Git connection
+# between Amplify and GitHub is needed.
+#
+# Required GitHub configuration (one-time):
+#   - Secret  AWS_DEPLOY_ROLE_ARN  : IAM role assumed via OIDC (Amplify perms)
+#   - Variable AMPLIFY_APP_ID      : the Amplify app id
+#   - Variable AWS_REGION          : e.g. us-east-1 (optional, defaults below)
+#   - Variable VITE_API_BASE_URL   : prod API base (optional, defaults below)
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # required for OIDC role assumption
+  contents: read
+
+concurrency:
+  group: amplify-deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://yala.dpdns.org/api/v1' }}
+
+      - name: Zip build output
+        run: cd dist && zip -r ../dist.zip . && cd ..
+
+      # Sets AWS_REGION / AWS_DEFAULT_REGION for the AWS CLI steps that follow.
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Create Amplify deployment
+        id: dep
+        run: |
+          OUT=$(aws amplify create-deployment --app-id "${{ vars.AMPLIFY_APP_ID }}" --branch-name main)
+          echo "jobId=$(echo "$OUT" | jq -r '.jobId')" >> "$GITHUB_OUTPUT"
+          echo "uploadUrl=$(echo "$OUT" | jq -r '.zipUploadUrl')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact to Amplify
+        run: |
+          curl -fsSL -H "Content-Type: application/zip" --upload-file dist.zip "${{ steps.dep.outputs.uploadUrl }}"
+
+      - name: Start Amplify deployment
+        run: aws amplify start-deployment --app-id "${{ vars.AMPLIFY_APP_ID }}" --branch-name main --job-id "${{ steps.dep.outputs.jobId }}"

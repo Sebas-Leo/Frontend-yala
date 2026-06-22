@@ -1,10 +1,16 @@
 import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Price, Countdown, Avatar, ReputationStars, Button, Input, StatusBadge,
-  Badge, Dialog, DniGate, Icon, YData,
+  Dialog, DniGate, EmptyState, Skeleton, Icon,
 } from '../ds';
-
-const { liveAuction } = YData;
+import { getListing } from '../api/listings.js';
+import { getAuction } from '../api/auctions.js';
+import { listBids, placeBid as placeBidApi } from '../api/bids.js';
+import { listingFromDto, bidFromDto } from '../api/adapters.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 const css = `
 .yal{max-width:1180px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.15fr 1fr;gap:32px;align-items:start;}
@@ -45,33 +51,146 @@ const css = `
 .yal__brow--lead .yal__bamt{color:var(--live-700);}
 .yal__leadtag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--live-hover);background:var(--live-100);padding:2px 7px;border-radius:999px;}
 .yal__tick{animation:yala-tick 1.2s var(--ease-out);}
+.yal__empty{max-width:1180px;margin:0 auto;padding:48px 24px;}
 @media(max-width:960px){.yal{grid-template-columns:1fr}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
+function increment(current) {
+  return Math.max(1, Math.round((Number(current) || 0) * 0.01));
+}
+
 export default function AuctionLive({ verified = false, onRequireDni, onBack }) {
   ensure();
-  const a = liveAuction;
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  const toast = useToast();
+
+  // 1) The listing carries the gallery, seller, description and the auction id.
+  const listingQ = useFetch((signal) => getListing(id, { signal }), [id]);
+  const listing = listingQ.data ? listingFromDto(listingQ.data) : null;
+  const auctionId = listing?.auction?.id ?? null;
+
+  // 2) Auction detail + bid history (only once we know the auction id). Refetched
+  //    by the polling effect and after placing a bid for a near-live feel.
+  const auctionQ = useFetch(
+    (signal) =>
+      Promise.all([
+        getAuction(auctionId, { signal }),
+        // The bid history requires auth; for guests it 401s. Degrade gracefully
+        // to an empty list — the live price/count still come from the auction.
+        listBids(auctionId, { size: 25, signal }).catch(() => ({ content: [] })),
+      ]).then(([auction, bids]) => ({ auction, bids })),
+    [auctionId],
+    { enabled: !!auctionId },
+  );
+
+  const auction = auctionQ.data?.auction || null;
+  const bidsPage = auctionQ.data?.bids || null;
+
+  const current = Number(auction?.currentPrice ?? listing?.auction?.currentPrice ?? 0);
+  const status = auction?.status || listing?.auction?.status || 'ACTIVE';
+  const isActive = status === 'ACTIVE';
+  const inc = increment(current);
+
+  const history = React.useMemo(() => {
+    const rows = (bidsPage?.content || []).map((b) => bidFromDto(b));
+    rows.sort((a, b) => b.amount - a.amount);
+    if (rows[0]) rows[0].leader = true;
+    return rows;
+  }, [bidsPage]);
+  const totalBids = auction?.totalBids ?? history.length;
+
   const [activeImg, setActiveImg] = React.useState(0);
-  const [bid, setBid] = React.useState(a.bid + a.minIncrement);
-  const [history, setHistory] = React.useState(a.bidHistory);
-  const [current, setCurrent] = React.useState(a.bid);
-  const [justBumped, setJustBumped] = React.useState(false);
+  const [bid, setBid] = React.useState(0);
+  const [bumped, setBumped] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [showGate, setShowGate] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  const placeBid = () => {
+  // Keep the suggested bid in sync as the current price climbs.
+  const prevCurrent = React.useRef(current);
+  React.useEffect(() => {
+    setBid(current + inc);
+    if (prevCurrent.current && current > prevCurrent.current) {
+      setBumped(true);
+      const t = setTimeout(() => setBumped(false), 1300);
+      prevCurrent.current = current;
+      return () => clearTimeout(t);
+    }
+    prevCurrent.current = current;
+    return undefined;
+  }, [current, inc]);
+
+  // Poll for live updates while the auction is active.
+  React.useEffect(() => {
+    if (!auctionId || !isActive) return undefined;
+    const t = setInterval(() => auctionQ.refetch(), 8000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auctionId, isActive]);
+
+  const onPlaceClick = () => {
+    if (!isAuthenticated) {
+      toast.error('Iniciá sesión', 'Necesitás una cuenta para pujar en Yala.');
+      navigate('/login');
+      return;
+    }
     if (!verified) { setShowGate(true); return; }
+    if (bid <= current) { toast.error('Puja insuficiente', `Tu puja debe superar S/. ${current.toLocaleString('es-PE')}.`); return; }
     setShowConfirm(true);
   };
-  const confirmBid = () => {
-    setCurrent(bid);
-    setHistory((h) => [{ user: 'vos', amount: bid, time: 'ahora', leader: true }, ...h.map((x) => ({ ...x, leader: false }))]);
-    setBid(bid + a.minIncrement);
-    setShowConfirm(false);
-    setJustBumped(true);
-    setTimeout(() => setJustBumped(false), 1300);
+
+  const confirmBid = async () => {
+    setSubmitting(true);
+    try {
+      await placeBidApi({ auctionId, amount: bid });
+      setShowConfirm(false);
+      toast.success('¡Puja registrada!', `Vas liderando con S/. ${bid.toLocaleString('es-PE')}.`, 'Gavel');
+      auctionQ.refetch();
+    } catch (err) {
+      setShowConfirm(false);
+      toast.error('No se pudo pujar', err.message || 'Intentá nuevamente.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // --- Loading / error / not-an-auction states ------------------------------
+  if (listingQ.loading) {
+    return (
+      <div className="yal" style={{ paddingTop: 28 }}>
+        <Skeleton style={{ aspectRatio: '1/1', borderRadius: 16 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Skeleton style={{ height: 28, width: '70%' }} />
+          <Skeleton style={{ height: 160, borderRadius: 16 }} />
+          <Skeleton style={{ height: 64, borderRadius: 12 }} />
+        </div>
+      </div>
+    );
+  }
+  if (listingQ.error || !listing) {
+    return (
+      <div className="yal__empty">
+        <EmptyState icon={<Icon.AlertTriangle size={26} />} title="No encontramos esta subasta"
+          description={listingQ.error?.message || 'La publicación no existe o fue retirada.'}
+          actions={<Button variant="secondary" onClick={() => navigate('/')}>Volver al inicio</Button>} />
+      </div>
+    );
+  }
+  if (!listing.auction) {
+    return (
+      <div className="yal__empty">
+        <EmptyState icon={<Icon.Gavel size={26} />} title="Esta publicación no es una subasta"
+          description="Es una venta a precio fijo. Podés comprarla directamente."
+          actions={<Button variant="primary" onClick={() => navigate('/listing/' + listing.id)}>Ver publicación</Button>} />
+      </div>
+    );
+  }
+
+  const gallery = listing.images;
+  const seller = listing.seller || {};
 
   return (
     <div style={{ maxWidth: 1180, margin: '0 auto', padding: '20px 24px 0' }}>
@@ -79,70 +198,85 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
       <div className="yal" style={{ padding: 0 }}>
         <div className="yal__gallery">
           <div className="yal__hero">
-            <div className="yal__herobadge"><StatusBadge kind="auction" status="ACTIVE" /></div>
-            <img src={a.gallery[activeImg]} alt={a.title} />
+            <div className="yal__herobadge"><StatusBadge kind="auction" status={status} /></div>
+            <img src={gallery[activeImg] || gallery[0]} alt={listing.title} />
           </div>
-          <div className="yal__thumbs">
-            {a.gallery.map((g, i) => (
-              <div key={i} className={`yal__thumb${i === activeImg ? ' yal__thumb--active' : ''}`} onClick={() => setActiveImg(i)}>
-                <img src={g} alt="" />
-              </div>
-            ))}
-          </div>
-          <div className="yal__sec" style={{ marginTop: 8 }}>
-            <div className="yal__sectt">Descripción</div>
-            <p className="yal__desc">{a.desc}</p>
-          </div>
+          {gallery.length > 1 && (
+            <div className="yal__thumbs">
+              {gallery.map((g, i) => (
+                <div key={i} className={`yal__thumb${i === activeImg ? ' yal__thumb--active' : ''}`} onClick={() => setActiveImg(i)}>
+                  <img src={g} alt="" />
+                </div>
+              ))}
+            </div>
+          )}
+          {listing.description && (
+            <div className="yal__sec" style={{ marginTop: 8 }}>
+              <div className="yal__sectt">Descripción</div>
+              <p className="yal__desc">{listing.description}</p>
+            </div>
+          )}
         </div>
 
         <div className="yal__info">
-          <div className="yal__cat">{a.cat} · {a.cond}</div>
-          <h1 className="yal__title">{a.title}</h1>
+          <div className="yal__cat">{listing.category}{listing.condition ? ` · ${listing.condition}` : ''}</div>
+          <h1 className="yal__title">{listing.title}</h1>
 
           <div className="yal__livebox">
             <div className="yal__lr">
               <div>
-                <div className="yal__lbl"><span className="yal__livedot" /> Puja actual</div>
-                <Price value={current} size={40} live className={justBumped ? 'yal__tick' : ''} />
+                <div className="yal__lbl"><span className="yal__livedot" /> {isActive ? 'Puja actual' : 'Precio final'}</div>
+                <Price value={current} size={40} live={isActive} className={bumped ? 'yal__tick' : ''} />
               </div>
               <div className="yal__cdwrap">
-                <div className="yal__lbl" style={{ justifyContent: 'flex-end' }}><Icon.Clock size={13} /> Cierra en</div>
-                <Countdown endsAt={a.endsAt} variant="auction" showDot={false} />
+                <div className="yal__lbl" style={{ justifyContent: 'flex-end' }}><Icon.Clock size={13} /> {isActive ? 'Cierra en' : 'Finalizada'}</div>
+                {isActive && <Countdown endsAt={listing.auction.endsAt} variant="auction" showDot={false} />}
               </div>
             </div>
-            <div className="yal__bidsno"><Icon.Gavel size={14} /> {history.length} pujas · incremento sugerido S/. {a.minIncrement.toLocaleString('es-PE')} (1%)</div>
+            <div className="yal__bidsno"><Icon.Gavel size={14} /> {totalBids} {totalBids === 1 ? 'puja' : 'pujas'} · incremento sugerido S/. {inc.toLocaleString('es-PE')} (1%)</div>
 
-            <div className="yal__bidform">
-              <Input label="Tu puja" prefix="S/." mono size="lg" value={bid}
-                onChange={(e) => setBid(Number(e.target.value.replace(/\D/g, '')) || 0)} style={{ flex: 1, minWidth: 0 }} />
-              <Button variant="live" size="lg" iconLeft={<Icon.Gavel size={18} />} onClick={placeBid}>Pujar</Button>
-            </div>
-            <div className="yal__hint">
-              <Icon.AlertTriangle size={14} style={{ color: 'var(--warning)', flex: 'none', marginTop: 1 }} />
-              <span>Tu puja debe superar la actual. No podés pujar dos veces seguidas ni sobre tu propia subasta.</span>
-            </div>
+            {isActive && (
+              <>
+                <div className="yal__bidform">
+                  <Input label="Tu puja" prefix="S/." mono size="lg" value={bid}
+                    onChange={(e) => setBid(Number(e.target.value.replace(/\D/g, '')) || 0)} style={{ flex: 1, minWidth: 0 }} />
+                  <Button variant="live" size="lg" iconLeft={<Icon.Gavel size={18} />} onClick={onPlaceClick} disabled={submitting}>Pujar</Button>
+                </div>
+                <div className="yal__hint">
+                  <Icon.AlertTriangle size={14} style={{ color: 'var(--warning)', flex: 'none', marginTop: 1 }} />
+                  <span>Tu puja debe superar la actual. No podés pujar dos veces seguidas ni sobre tu propia subasta.</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="yal__seller">
-            <Avatar name={a.seller.name} verified={a.seller.verified} size="lg" />
+            <Avatar name={seller.name} verified={seller.verified} size="lg" />
             <div className="yal__smeta">
-              <div className="yal__sname">{a.seller.name} {a.seller.verified && <span className="yal__sverif"><Icon.Shield size={13} /> verificada</span>}</div>
-              <ReputationStars value={a.seller.rating} count={a.seller.reviews} positivePct={a.seller.pct} size={15} />
+              <div className="yal__sname">{seller.name} {seller.verified && <span className="yal__sverif"><Icon.Shield size={13} /> verificada</span>}</div>
+              {seller.rating != null && <ReputationStars value={seller.rating} size={15} />}
             </div>
-            <Button variant="secondary" size="sm">Ver perfil</Button>
+            <Button variant="secondary" size="sm" onClick={() => seller.id && navigate('/seller/' + seller.id)}>Ver perfil</Button>
           </div>
 
           <div className="yal__sec">
             <div className="yal__sectt"><span>Historial de pujas</span><span style={{ fontWeight: 500, color: 'var(--text-muted)', fontSize: 12 }}>en tiempo real</span></div>
-            <div className="yal__hist">
-              {history.map((b, i) => (
-                <div key={i} className={`yal__brow${b.leader ? ' yal__brow--lead' : ''}`}>
-                  <span className="yal__bu"><Avatar name={b.user} size={22} /> {b.user} {b.leader && <span className="yal__leadtag">líder</span>}</span>
-                  <span className="yal__btime">{b.time}</span>
-                  <span className="yal__bamt">S/. {b.amount.toLocaleString('es-PE')}</span>
-                </div>
-              ))}
-            </div>
+            {history.length === 0 ? (
+              <div className="yal__desc" style={{ color: 'var(--text-muted)' }}>Todavía no hay pujas. ¡Sé el primero!</div>
+            ) : (
+              <div className="yal__hist">
+                {history.map((b) => {
+                  const mine = user && b.bidderId === user.id;
+                  return (
+                    <div key={b.id} className={`yal__brow${b.leader ? ' yal__brow--lead' : ''}`}>
+                      <span className="yal__bu"><Avatar name={b.user} size={22} /> {mine ? 'vos' : b.user} {b.leader && <span className="yal__leadtag">líder</span>}</span>
+                      <span className="yal__btime">{b.time}</span>
+                      <span className="yal__bamt">S/. {b.amount.toLocaleString('es-PE')}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -150,8 +284,8 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
       {showConfirm && (
         <Dialog open onClose={() => setShowConfirm(false)} tone="live" icon={<Icon.Gavel size={20} />}
           title="Confirmá tu puja"
-          description={`Vas a pujar S/. ${bid.toLocaleString('es-PE')} por ${a.title}.`}
-          footer={<><Button variant="ghost" onClick={() => setShowConfirm(false)}>Cancelar</Button><Button variant="live" onClick={confirmBid}>Confirmar puja</Button></>}>
+          description={`Vas a pujar S/. ${bid.toLocaleString('es-PE')} por ${listing.title}.`}
+          footer={<><Button variant="ghost" onClick={() => setShowConfirm(false)} disabled={submitting}>Cancelar</Button><Button variant="live" onClick={confirmBid} disabled={submitting}>{submitting ? 'Pujando…' : 'Confirmar puja'}</Button></>}>
           <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55 }}>
             Si ganás, tendrás <b style={{ color: 'var(--text-strong)' }}>48 horas</b> para pagar. Las pujas no se pueden retirar.
           </div>

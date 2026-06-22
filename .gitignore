@@ -24,3 +24,6 @@ dist-ssr
 .idea
 *.suo
 *.sw?
+
+CLAUDE.md
+DOCS.md

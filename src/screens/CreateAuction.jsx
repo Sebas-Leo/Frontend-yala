@@ -1,7 +1,13 @@
 import React from 'react';
-import { Input, Select, Tag, Button, Icon, YData } from '../ds';
-
-const { listings } = YData;
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Input, Select, Tag, Button, EmptyState, Icon } from '../ds';
+import { getUserListings } from '../api/users.js';
+import { createAuction } from '../api/auctions.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useForm } from '../hooks/useForm.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
+import { isoFromDays } from '../utils/format.js';
 
 const css = `
 .ca{max-width:640px;margin:0 auto;padding:24px;}
@@ -11,16 +17,59 @@ const css = `
 .ca__card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:24px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:18px;}
 .ca__lbl{font-size:13px;font-weight:600;color:var(--text-strong);margin-bottom:10px;}
 .ca__durs{display:flex;gap:10px;flex-wrap:wrap;}
+.ca__err{font-size:12px;color:var(--danger);margin-top:6px;}
 .ca__hint{font-size:12px;color:var(--text-subtle);display:flex;gap:6px;align-items:flex-start;line-height:1.5;}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
 const DURATIONS = [1, 3, 5, 7];
 
-export default function CreateAuction({ onBack, onCreate }) {
+function validate(v) {
+  const e = {};
+  if (!v.listingId) e.listingId = 'Elegí una publicación.';
+  if (!v.startingPrice || Number(v.startingPrice) < 0) e.startingPrice = 'Ingresá un precio inicial válido.';
+  return e;
+}
+
+export default function CreateAuction({ onBack }) {
   ensure();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const toast = useToast();
+  const preselected = location.state?.listingId;
+
+  // The seller's own AUCTION listings that don't already have an active auction.
+  const listingsQ = useFetch(
+    (signal) => getUserListings(user.id, { page: 0, size: 100, signal }),
+    [user?.id],
+    { enabled: !!user?.id },
+  );
+  const eligible = (listingsQ.data?.content || []).filter(
+    (l) => l.mode === 'AUCTION' && (!l.auction || l.auction.status !== 'ACTIVE'),
+  );
+
+  const form = useForm({
+    initial: { listingId: preselected ? String(preselected) : '', startingPrice: '', endsAt: '' },
+    validate,
+  });
   const [duration, setDuration] = React.useState(3);
-  const options = listings.map((l) => ({ value: l.id, label: l.title }));
+
+  const submit = () =>
+    form.handleSubmit(async (v) => {
+      try {
+        const endsAt = v.endsAt ? v.endsAt.length === 16 ? `${v.endsAt}:00` : v.endsAt : isoFromDays(duration);
+        await createAuction({
+          listingId: Number(v.listingId),
+          startingPrice: Number(v.startingPrice),
+          endsAt,
+        });
+        toast.success('Subasta creada', 'La subasta arranca según lo que programaste.', 'Gavel');
+        navigate('/seller');
+      } catch (err) {
+        toast.error('No se pudo crear la subasta', err.message || 'Revisá los datos e intentá de nuevo.');
+      }
+    });
 
   return (
     <div className="ca">
@@ -28,23 +77,40 @@ export default function CreateAuction({ onBack, onCreate }) {
       <div className="ca__h1">Nueva subasta</div>
       <div className="ca__sub">Elegí una publicación tuya y definí el precio inicial y la duración.</div>
 
-      <form className="ca__card" onSubmit={(e) => { e.preventDefault(); onCreate && onCreate(); }}>
-        <Select label="Publicación" options={options} placeholder="Elegí una de tus publicaciones" required />
-        <Input label="Precio inicial (S/.)" prefix="S/." mono placeholder="0.00" hint="Es la puja mínima de apertura." required />
-
-        <div>
-          <div className="ca__lbl">Duración</div>
-          <div className="ca__durs">
-            {DURATIONS.map((d) => <Tag key={d} selected={duration === d} onClick={() => setDuration(d)}>{d} {d === 1 ? 'día' : 'días'}</Tag>)}
+      {!listingsQ.loading && eligible.length === 0 ? (
+        <EmptyState icon={<Icon.Package size={24} />} title="No tenés publicaciones disponibles"
+          description="Creá primero una publicación en modo subasta para poder abrir una subasta."
+          actions={<Button variant="primary" onClick={() => navigate('/seller/new-listing')}>Crear publicación</Button>} />
+      ) : (
+        <form className="ca__card" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          <div>
+            <Select label="Publicación" placeholder={listingsQ.loading ? 'Cargando…' : 'Elegí una de tus publicaciones'}
+              value={form.values.listingId} onChange={form.handleChange('listingId')}
+              options={eligible.map((l) => ({ value: String(l.id), label: l.title }))} required />
+            {form.errors.listingId && <div className="ca__err">{form.errors.listingId}</div>}
           </div>
-        </div>
 
-        <Input label="Inicio programado (opcional)" type="datetime-local" hint="Si lo dejás vacío, la subasta arranca de inmediato." />
+          <div>
+            <Input label="Precio inicial (S/.)" prefix="S/." mono placeholder="0.00" hint="Es la puja mínima de apertura."
+              value={form.values.startingPrice} onChange={(e) => form.setValue('startingPrice', e.target.value.replace(/[^\d.]/g, ''))}
+              error={form.errors.startingPrice} required />
+          </div>
 
-        <div className="ca__hint"><Icon.Clock size={14} style={{ flex: 'none', marginTop: 1 }} /> Al cerrar con pujas se crea una orden para el ganador con 48h para pagar. Si no paga, pasa al 2º mejor postor.</div>
+          <div>
+            <div className="ca__lbl">Duración</div>
+            <div className="ca__durs">
+              {DURATIONS.map((d) => <Tag key={d} selected={duration === d} onClick={() => { setDuration(d); form.setValue('endsAt', ''); }}>{d} {d === 1 ? 'día' : 'días'}</Tag>)}
+            </div>
+          </div>
 
-        <Button variant="primary" size="lg" fullWidth type="submit">Crear subasta</Button>
-      </form>
+          <Input label="Fin exacto (opcional)" type="datetime-local" hint="Si lo dejás vacío, cierra en la duración elegida."
+            value={form.values.endsAt} onChange={form.handleChange('endsAt')} />
+
+          <div className="ca__hint"><Icon.Clock size={14} style={{ flex: 'none', marginTop: 1 }} /> Al cerrar con pujas se crea una orden para el ganador con 48h para pagar.</div>
+
+          <Button variant="primary" size="lg" fullWidth type="submit" disabled={form.submitting}>{form.submitting ? 'Creando…' : 'Crear subasta'}</Button>
+        </form>
+      )}
     </div>
   );
 }

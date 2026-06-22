@@ -1,8 +1,15 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Price, Avatar, ReputationStars, Button, StatusBadge, Tag, Dialog, DniGate, Icon, YData } from '../ds';
-
-const { listings } = YData;
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Price, Avatar, ReputationStars, Button, StatusBadge, Tag, Dialog, DniGate,
+  EmptyState, Skeleton, Icon,
+} from '../ds';
+import { getListing } from '../api/listings.js';
+import { createOrder } from '../api/orders.js';
+import { listingFromDto } from '../api/adapters.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 const css = `
 .ld{max-width:1180px;margin:0 auto;padding:20px 24px 0;}
@@ -32,20 +39,76 @@ const css = `
 .ld__sectt{font-size:13px;font-weight:700;color:var(--text-strong);margin-bottom:10px;}
 .ld__desc{font-size:14px;color:var(--text-body);line-height:1.6;}
 .ld__tags{display:flex;flex-wrap:wrap;gap:7px;}
+.ld__empty{max-width:1180px;margin:0 auto;padding:48px 24px;}
 @media(max-width:960px){.ld__grid{grid-template-columns:1fr}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
-export default function ListingDetail({ verified = false, onRequireDni, onBuy, onBack, onOpenSeller }) {
+export default function ListingDetail({ verified = false, onRequireDni, onBack }) {
   ensure();
   const { id } = useParams();
-  const l = listings.find((x) => x.id === id) || listings[0];
-  const gallery = [l.img, listings[(listings.indexOf(l) + 1) % listings.length].img, listings[(listings.indexOf(l) + 2) % listings.length].img, listings[(listings.indexOf(l) + 3) % listings.length].img];
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const toast = useToast();
+
+  const { data, loading, error } = useFetch((signal) => getListing(id, { signal }), [id]);
+  const l = data ? listingFromDto(data) : null;
+
   const [activeImg, setActiveImg] = React.useState(0);
   const [showGate, setShowGate] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
+  const [buying, setBuying] = React.useState(false);
 
-  const buy = () => { if (!verified) { setShowGate(true); return; } setShowConfirm(true); };
+  const buy = () => {
+    if (!isAuthenticated) {
+      toast.error('Iniciá sesión', 'Necesitás una cuenta para comprar en Yala.');
+      navigate('/login');
+      return;
+    }
+    if (!verified) { setShowGate(true); return; }
+    setShowConfirm(true);
+  };
+
+  const confirmBuy = async () => {
+    setBuying(true);
+    try {
+      const order = await createOrder({ listingId: l.id });
+      setShowConfirm(false);
+      toast.success('Orden creada', 'Tenés 48h para completar el pago.', 'Wallet');
+      navigate('/checkout?orderId=' + order.id);
+    } catch (err) {
+      setShowConfirm(false);
+      toast.error('No se pudo crear la orden', err.message || 'Intentá nuevamente.');
+    } finally {
+      setBuying(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="ld"><div className="ld__grid">
+        <Skeleton style={{ aspectRatio: '1/1', borderRadius: 16 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Skeleton style={{ height: 28, width: '70%' }} />
+          <Skeleton style={{ height: 150, borderRadius: 16 }} />
+          <Skeleton style={{ height: 64, borderRadius: 12 }} />
+        </div>
+      </div></div>
+    );
+  }
+  if (error || !l) {
+    return (
+      <div className="ld__empty">
+        <EmptyState icon={<Icon.AlertTriangle size={26} />} title="No encontramos esta publicación"
+          description={error?.message || 'La publicación no existe o fue retirada.'}
+          actions={<Button variant="secondary" onClick={() => navigate('/')}>Volver al inicio</Button>} />
+      </div>
+    );
+  }
+
+  const gallery = l.images;
+  const seller = l.seller || {};
+  const isFixed = l.mode === 'FIXED';
 
   return (
     <div className="ld">
@@ -54,53 +117,62 @@ export default function ListingDetail({ verified = false, onRequireDni, onBuy, o
         <div className="ld__gallery">
           <div className="ld__hero">
             <div className="ld__herobadge"><StatusBadge kind="listing" status={l.status || 'ACTIVE'} /></div>
-            <img src={gallery[activeImg]} alt={l.title} />
+            <img src={gallery[activeImg] || gallery[0]} alt={l.title} />
           </div>
-          <div className="ld__thumbs">
-            {gallery.map((g, i) => (
-              <div key={i} className={`ld__thumb${i === activeImg ? ' ld__thumb--active' : ''}`} onClick={() => setActiveImg(i)}>
-                <img src={g} alt="" />
-              </div>
-            ))}
-          </div>
+          {gallery.length > 1 && (
+            <div className="ld__thumbs">
+              {gallery.map((g, i) => (
+                <div key={i} className={`ld__thumb${i === activeImg ? ' ld__thumb--active' : ''}`} onClick={() => setActiveImg(i)}>
+                  <img src={g} alt="" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="ld__info">
-          <div className="ld__cat">{l.cat} · {l.cond}</div>
+          <div className="ld__cat">{l.category}{l.condition ? ` · ${l.condition}` : ''}</div>
           <h1 className="ld__title">{l.title}</h1>
 
           <div className="ld__buybox">
             <div className="ld__pricerow">
               <div>
-                <div className="ld__lbl">Precio</div>
-                <Price value={l.price} size={36} />
+                <div className="ld__lbl">{isFixed ? 'Precio' : 'Subasta'}</div>
+                {isFixed
+                  ? <Price value={l.fixedPrice} size={36} />
+                  : <Price value={l.auction?.currentPrice ?? 0} size={36} live />}
               </div>
-              <Tag>{l.cond}</Tag>
+              {l.condition && <Tag>{l.condition}</Tag>}
             </div>
             <div className="ld__buyactions">
-              <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.Wallet size={18} />} onClick={buy}>Comprar ahora</Button>
-              <Button variant="secondary" size="md" fullWidth iconLeft={<Icon.Heart size={16} />}>Guardar en favoritos</Button>
+              {isFixed ? (
+                <Button variant="primary" size="lg" fullWidth iconLeft={<Icon.Wallet size={18} />} onClick={buy} disabled={buying}>Comprar ahora</Button>
+              ) : (
+                <Button variant="live" size="lg" fullWidth iconLeft={<Icon.Gavel size={18} />} onClick={() => navigate('/auction/' + l.id)}>Ir a la subasta</Button>
+              )}
               <div className="ld__note"><Icon.Shield size={13} /> Protegido por Yala hasta la entrega</div>
             </div>
           </div>
 
-          <div className="ld__seller" onClick={onOpenSeller} style={{ cursor: 'pointer' }}>
-            <Avatar name={l.seller.name} verified={l.seller.verified} size="lg" />
+          <div className="ld__seller" onClick={() => seller.id && navigate('/seller/' + seller.id)} style={{ cursor: 'pointer' }}>
+            <Avatar name={seller.name} verified={seller.verified} size="lg" />
             <div className="ld__smeta">
-              <div className="ld__sname">{l.seller.name} {l.seller.verified && <span className="ld__sverif"><Icon.Shield size={13} /> verificada</span>}</div>
-              <ReputationStars value={l.seller.rating} count={l.seller.reviews} positivePct={l.seller.pct} size={15} />
+              <div className="ld__sname">{seller.name} {seller.verified && <span className="ld__sverif"><Icon.Shield size={13} /> verificada</span>}</div>
+              {seller.rating != null && <ReputationStars value={seller.rating} size={15} />}
             </div>
             <Button variant="secondary" size="sm">Ver perfil</Button>
           </div>
 
-          <div className="ld__sec">
-            <div className="ld__sectt">Descripción</div>
-            <p className="ld__desc">Ejemplar de {l.title}. Condición {l.cond}. Conservado con cuidado y listo para enviar con embalaje protegido. Cualquier consulta, escribile al vendedor antes de comprar.</p>
-          </div>
+          {l.description && (
+            <div className="ld__sec">
+              <div className="ld__sectt">Descripción</div>
+              <p className="ld__desc">{l.description}</p>
+            </div>
+          )}
 
           <div className="ld__sec">
             <div className="ld__sectt">Etiquetas</div>
-            <div className="ld__tags"><Tag>{l.cat}</Tag><Tag>{l.cond}</Tag><Tag>Coleccionable</Tag><Tag>Envío protegido</Tag></div>
+            <div className="ld__tags">{l.category && <Tag>{l.category}</Tag>}{l.condition && <Tag>{l.condition}</Tag>}<Tag>Coleccionable</Tag><Tag>Envío protegido</Tag></div>
           </div>
         </div>
       </div>
@@ -108,10 +180,10 @@ export default function ListingDetail({ verified = false, onRequireDni, onBuy, o
       {showConfirm && (
         <Dialog open onClose={() => setShowConfirm(false)} tone="brand" icon={<Icon.Wallet size={20} />}
           title="Confirmá tu compra"
-          description={`Vas a comprar ${l.title} por S/. ${l.price.toLocaleString('es-PE')}.`}
-          footer={<><Button variant="ghost" onClick={() => setShowConfirm(false)}>Cancelar</Button><Button variant="primary" onClick={() => { setShowConfirm(false); onBuy && onBuy(); }}>Ir a pagar</Button></>}>
+          description={`Vas a comprar ${l.title} por S/. ${Number(l.fixedPrice || 0).toLocaleString('es-PE')}.`}
+          footer={<><Button variant="ghost" onClick={() => setShowConfirm(false)} disabled={buying}>Cancelar</Button><Button variant="primary" onClick={confirmBuy} disabled={buying}>{buying ? 'Creando…' : 'Ir a pagar'}</Button></>}>
           <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55 }}>
-            Se creará una orden en estado <b style={{ color: 'var(--text-strong)' }}>pendiente</b>. Tenés 48h para completar el pago con Stripe.
+            Se creará una orden en estado <b style={{ color: 'var(--text-strong)' }}>pendiente</b>. Tenés 48h para completar el pago.
           </div>
         </Dialog>
       )}

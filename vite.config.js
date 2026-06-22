@@ -17,8 +17,14 @@ export default defineConfig(({ mode }) => {
       open: false,
       proxy: {
         // Dev proxy: the browser calls same-origin /api, Vite forwards it to the
-        // Spring Boot backend on :8081 (openapi profile). Avoids CORS in dev.
-        '/api': 'http://localhost:8081',
+        // deployed Spring Boot backend. Avoids CORS in dev and lets the app run
+        // without a local backend. Override with VITE_DEV_API_TARGET (e.g.
+        // http://localhost:8081) to develop against a local backend instead.
+        '/api': {
+          target: env.VITE_DEV_API_TARGET || 'https://yala.dpdns.org',
+          changeOrigin: true,
+          secure: true,
+        },
 
         // Didit identity API as a thin BFF. Didit is server-to-server: it needs
         // a secret `x-api-key` and does not allow browser CORS. We inject the key

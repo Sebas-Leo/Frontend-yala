@@ -1,14 +1,14 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Avatar, ReputationStars, Tabs, AuctionCard, Icon, YData } from '../ds';
-
-const { sellers, auctions } = YData;
-
-const REVIEWS = [
-  { id: 'r1', author: 'collector_lima', rating: 5, comment: 'Carta tal cual la foto, embalaje impecable. Llegó antes de lo previsto.', date: '8 jun 2026' },
-  { id: 'r2', author: 'ash_k', rating: 5, comment: 'Vendedor de confianza, respondió todas mis dudas antes de pujar.', date: '1 jun 2026' },
-  { id: 'r3', author: 'pdiglett', rating: 4, comment: 'Todo bien, el envío tardó un par de días más de lo estimado.', date: '24 may 2026' },
-];
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Avatar, ReputationStars, Tabs, AuctionCard, ListingCard, CardSkeleton,
+  EmptyState, Pagination, Icon,
+} from '../ds';
+import { getUser, getUserListings } from '../api/users.js';
+import { listReviewsByUser } from '../api/reviews.js';
+import { auctionCardFrom, listingCardFrom, reviewFromDto, userFromDto } from '../api/adapters.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 
 const css = `
 .sp{max-width:1080px;margin:0 auto;padding:24px;}
@@ -29,6 +29,7 @@ const css = `
 .sp__revauth{font-size:14px;font-weight:700;color:var(--text-strong);flex:1;}
 .sp__revdate{font-size:12px;color:var(--text-subtle);font-family:var(--font-mono);}
 .sp__revtxt{font-size:14px;color:var(--text-body);line-height:1.55;}
+.sp__foot{display:flex;justify-content:center;margin-top:22px;}
 @media(max-width:1080px){.sp__grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:680px){.sp__grid{grid-template-columns:repeat(2,1fr)}.sp__head{flex-direction:column;text-align:center}}
 `;
@@ -37,56 +38,118 @@ let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElemen
 export default function SellerProfile({ onBack, onOpenAuction }) {
   ensure();
   const { id } = useParams();
-  const s = sellers[id] || sellers.marco;
-  const [tab, setTab] = React.useState('auctions');
-  const sellerAuctions = auctions.filter((a) => a.seller.id === s.id);
-  const shown = sellerAuctions.length ? sellerAuctions : auctions.slice(0, 4);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [tab, setTab] = React.useState('listings');
+  const [lPage, setLPage] = React.useState(0);
+  const [rPage, setRPage] = React.useState(0);
+
+  // The navbar links to /seller/me; resolve it to the logged-in user's id.
+  const sellerId = id === 'me' ? user?.id : id;
+  const ready = sellerId != null;
+
+  const userQ = useFetch((signal) => getUser(sellerId, { signal }), [sellerId], { enabled: ready });
+  const listingsQ = useFetch((signal) => getUserListings(sellerId, { page: lPage, size: 12, signal }), [sellerId, lPage], { enabled: ready });
+  const reviewsQ = useFetch((signal) => listReviewsByUser(sellerId, { page: rPage, size: 10, signal }), [sellerId, rPage], { enabled: ready });
+
+  const s = userQ.data ? userFromDto(userQ.data) : null;
+  const listings = listingsQ.data?.content || [];
+  const reviewsCount = reviewsQ.data?.totalElements ?? 0;
+  const reviews = (reviewsQ.data?.content || []).map(reviewFromDto);
+
+  if (!ready) {
+    return (
+      <div className="sp">
+        <EmptyState icon={<Icon.User size={26} />} title="Perfil no disponible" description="Iniciá sesión para ver tu perfil." />
+      </div>
+    );
+  }
 
   return (
     <div className="sp">
       <div className="sp__back" onClick={onBack}><Icon.ChevronLeft size={16} /> Volver</div>
-      <div className="sp__head">
-        <Avatar name={s.name} verified={s.verified} size={72} />
-        <div className="sp__hmeta">
-          <div className="sp__name">{s.name} {s.verified && <span className="sp__verif"><Icon.Shield size={14} /> identidad verificada</span>}</div>
-          <div className="sp__since">{s.store ? 'Tienda' : 'Vendedor'} en Yala desde {s.since}</div>
-          <div style={{ marginTop: 8 }}><ReputationStars value={s.rating} count={s.reviews} positivePct={s.pct} size={16} /></div>
-        </div>
-      </div>
 
-      <div className="sp__stats">
-        <div className="sp__stat"><div className="sp__sval">{s.sales.toLocaleString('es-PE')}</div><div className="sp__slabel">Ventas</div></div>
-        <div className="sp__stat"><div className="sp__sval">{s.pct}%</div><div className="sp__slabel">Valoraciones positivas</div></div>
-        <div className="sp__stat"><div className="sp__sval">{s.rating.toFixed(1)}</div><div className="sp__slabel">Reputación</div></div>
-      </div>
+      {userQ.loading || !s ? (
+        <div className="sp__head"><Avatar name="…" size={72} /><div className="sp__hmeta"><div className="sp__name">Cargando…</div></div></div>
+      ) : (
+        <>
+          <div className="sp__head">
+            <Avatar name={s.name} verified={s.verified} size={72} />
+            <div className="sp__hmeta">
+              <div className="sp__name">{s.name} {s.verified && <span className="sp__verif"><Icon.Shield size={14} /> identidad verificada</span>}</div>
+              <div className="sp__since">{s.role === 'SELLER' ? 'Vendedor' : 'Usuario'} en Yala</div>
+              <div style={{ marginTop: 8 }}><ReputationStars value={s.rating || 0} count={reviewsCount} size={16} /></div>
+            </div>
+          </div>
+
+          <div className="sp__stats">
+            <div className="sp__stat"><div className="sp__sval">{(s.rating || 0).toFixed(1)}</div><div className="sp__slabel">Reputación</div></div>
+            <div className="sp__stat"><div className="sp__sval">{reviewsCount}</div><div className="sp__slabel">Reseñas</div></div>
+            <div className="sp__stat"><div className="sp__sval">{listingsQ.data?.totalElements ?? 0}</div><div className="sp__slabel">Publicaciones</div></div>
+          </div>
+        </>
+      )}
 
       <Tabs value={tab} onChange={setTab} tabs={[
-        { value: 'auctions', label: 'Subastas', count: shown.length },
-        { value: 'reviews', label: 'Reseñas', count: s.reviews },
+        { value: 'listings', label: 'Publicaciones', count: listingsQ.data?.totalElements ?? 0 },
+        { value: 'reviews', label: 'Reseñas', count: reviewsCount },
       ]} />
 
-      {tab === 'auctions' ? (
-        <div className="sp__grid">
-          {shown.map((a) => (
-            <AuctionCard key={a.id} image={a.img} title={a.title} currentBid={a.bid} bidsCount={a.bids}
-              endsAt={a.endsAt} status={a.status} sellerName={a.seller.name} sellerVerified={a.seller.verified}
-              as="a" href="#" onClick={(e) => { e.preventDefault(); onOpenAuction && onOpenAuction(a.id); }} />
-          ))}
-        </div>
-      ) : (
-        <div className="sp__reviews">
-          {REVIEWS.map((r) => (
-            <div className="sp__rev" key={r.id}>
-              <div className="sp__revhd">
-                <Avatar name={r.author} size={28} />
-                <span className="sp__revauth">{r.author}</span>
-                <ReputationStars value={r.rating} size={14} />
-                <span className="sp__revdate">{r.date}</span>
-              </div>
-              <div className="sp__revtxt">{r.comment}</div>
+      {tab === 'listings' ? (
+        listingsQ.loading ? (
+          <div className="sp__grid">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>
+        ) : listings.length === 0 ? (
+          <EmptyState icon={<Icon.Package size={24} />} title="Sin publicaciones" description="Este vendedor todavía no tiene publicaciones activas." />
+        ) : (
+          <>
+            <div className="sp__grid">
+              {listings.map((dto) => {
+                if (dto.mode === 'AUCTION') {
+                  const c = auctionCardFrom(dto);
+                  return (
+                    <AuctionCard key={dto.id} image={c.image} title={c.title} currentBid={c.currentBid} bidsCount={c.bidsCount}
+                      endsAt={c.endsAt} status={c.status} sellerName={c.sellerName} sellerVerified={c.sellerVerified}
+                      as="a" href="#" onClick={(e) => { e.preventDefault(); onOpenAuction ? onOpenAuction(c.id) : navigate('/auction/' + c.id); }} />
+                  );
+                }
+                const c = listingCardFrom(dto);
+                return (
+                  <ListingCard key={dto.id} image={c.image} title={c.title} condition={c.condition} price={c.price}
+                    sellerName={c.sellerName} sellerVerified={c.sellerVerified} sellerRating={c.sellerRating}
+                    as="a" href="#" onClick={(e) => { e.preventDefault(); navigate('/listing/' + c.id); }} />
+                );
+              })}
             </div>
-          ))}
-        </div>
+            <div className="sp__foot">
+              <Pagination page={lPage + 1} total={listingsQ.data?.totalPages ?? 0} onChange={(p) => setLPage(p - 1)} />
+            </div>
+          </>
+        )
+      ) : (
+        reviewsQ.loading ? (
+          <div className="sp__reviews">{Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}</div>
+        ) : reviews.length === 0 ? (
+          <EmptyState icon={<Icon.Star size={24} />} title="Sin reseñas todavía" description="Cuando complete ventas, las reseñas aparecerán acá." />
+        ) : (
+          <>
+            <div className="sp__reviews">
+              {reviews.map((r) => (
+                <div className="sp__rev" key={r.id}>
+                  <div className="sp__revhd">
+                    <Avatar name={r.author?.name || 'Anónimo'} size={28} />
+                    <span className="sp__revauth">{r.author?.name || 'Anónimo'}</span>
+                    <ReputationStars value={r.rating} size={14} />
+                    <span className="sp__revdate">{r.time}</span>
+                  </div>
+                  <div className="sp__revtxt">{r.comment}</div>
+                </div>
+              ))}
+            </div>
+            <div className="sp__foot">
+              <Pagination page={rPage + 1} total={reviewsQ.data?.totalPages ?? 0} onChange={(p) => setRPage(p - 1)} />
+            </div>
+          </>
+        )
       )}
     </div>
   );
