@@ -3,6 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IconButton, Avatar, Icon } from '../ds';
 import { listCategories } from '../api/categories.js';
 import { getUnreadCount } from '../api/notifications.js';
+import { subscribeNotifications } from '../api/realtime.js';
+import { notificationFromDto } from '../api/adapters.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import { useFetch } from '../hooks/useFetch.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 
@@ -43,6 +47,8 @@ function readUnread(data) {
 export default function AppShell({ onNav, onLogout, user = null }) {
   ensure();
   const navigate = useNavigate();
+  const auth = useAuth();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get('category') || null;
 
@@ -58,6 +64,23 @@ export default function AppShell({ onNav, onLogout, user = null }) {
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Real-time notifications: STOMP (`/topic/notifications/{userId}`) pushes the
+  // badge live and pops a toast the instant something happens, instead of
+  // waiting up to 30s for the poll above (which stays as a safety net).
+  const userId = auth.user?.id;
+  const refetchUnreadRef = React.useRef(unreadQ.refetch);
+  refetchUnreadRef.current = unreadQ.refetch;
+  React.useEffect(() => {
+    if (!userId) return undefined;
+    const unsub = subscribeNotifications(userId, (dto) => {
+      const n = notificationFromDto(dto);
+      if (n) toast.show({ tone: n.tone, title: n.title, message: n.msg, icon: n.icon });
+      if (refetchUnreadRef.current) refetchUnreadRef.current();
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // Debounced search -> navigate Home with ?q=.
   const [term, setTerm] = React.useState(searchParams.get('q') || '');

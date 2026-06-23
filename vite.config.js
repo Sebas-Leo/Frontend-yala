@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // sockjs-client references the Node global `global`, which Vite (ESM) does
+    // not define in the browser. Alias it to globalThis so the STOMP/SockJS
+    // realtime client (see src/api/realtime.js) loads without crashing.
+    define: { global: 'globalThis' },
     server: {
       port: 5173,
       open: false,
