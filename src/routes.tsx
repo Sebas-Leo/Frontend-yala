@@ -8,6 +8,8 @@ import React from 'react';
 const Home = React.lazy(() => import('./screens/Home'));
 const Landing = React.lazy(() => import('./screens/Landing'));
 const AuctionLive = React.lazy(() => import('./screens/AuctionLive'));
+const LiveView = React.lazy(() => import('./screens/LiveView'));
+const GoLive = React.lazy(() => import('./screens/GoLive'));
 const ListingDetail = React.lazy(() => import('./screens/ListingDetail'));
 const SellerProfile = React.lazy(() => import('./screens/SellerProfile'));
 const Auth = React.lazy(() => import('./screens/Auth'));
@@ -52,8 +54,26 @@ export function buildRoutes(ctx: any): RouteDef[] {
   };
 
   return [
-    { path: '/', element: <Home onOpenAuction={(id) => navigate('/auction/' + id)} /> },
+    {
+      path: '/',
+      element: (
+        <Home
+          onOpenAuction={(id) => navigate('/auction/' + id)}
+          onOpenLive={(id) => navigate('/live/' + id)}
+        />
+      ),
+    },
     { path: '/inicio', element: <Landing onOpenAuction={(id) => navigate('/auction/' + id)} /> },
+    {
+      path: '/live/:id',
+      element: (
+        <LiveView
+          verified={auth.isIdentityVerified}
+          onRequireDni={() => navigate('/verify-dni')}
+          onBack={() => navigate('/')}
+        />
+      ),
+    },
     {
       path: '/auction/:id',
       element: (
@@ -94,10 +114,17 @@ export function buildRoutes(ctx: any): RouteDef[] {
       element: (
         <SellerDashboard
           onNew={() => navigate('/seller/new-listing')}
+          onGoLive={() => navigate('/seller/go-live')}
           onOpenAuction={(id) => navigate('/auction/' + id)}
           onOpenOrder={(id) => navigate('/checkout?orderId=' + id)}
         />
       ),
+    },
+    {
+      path: '/seller/go-live',
+      protect: true,
+      roles: SELLER,
+      element: <GoLive onBack={() => navigate('/seller')} />,
     },
     {
       path: '/seller/new-listing',

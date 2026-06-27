@@ -111,3 +111,15 @@ export function subscribeAuction<T = unknown>(auctionId: number | string, cb: (p
 export function subscribeNotifications<T = unknown>(userId: number | string, cb: (payload: T | null) => void): () => void {
   return subscribe<T>(`/topic/notifications/${userId}`, cb);
 }
+
+// Live stream state channel: flash-auction started/bid/closed and LIVE_ENDED
+// (com.yala.dto.live.LiveUpdateMessage), broadcast on /topic/live/{id}.
+export function subscribeLive<T = unknown>(streamId: number | string, cb: (payload: T | null) => void): () => void {
+  return subscribe<T>(`/topic/live/${streamId}`, cb);
+}
+
+// Live chat channel: each new comment (com.yala.dto.live.ResponseLiveCommentDTO)
+// is broadcast on /topic/live/{id}/chat.
+export function subscribeLiveChat<T = unknown>(streamId: number | string, cb: (payload: T | null) => void): () => void {
+  return subscribe<T>(`/topic/live/${streamId}/chat`, cb);
+}

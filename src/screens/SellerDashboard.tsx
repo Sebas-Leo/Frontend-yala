@@ -43,8 +43,8 @@ function Metric({ icon, bg, color, label, value, foot, bar }: MetricProps) {
   );
 }
 
-interface SellerDashboardProps { onNew?: () => void; onOpenAuction?: (id: any) => void; onOpenOrder?: (id: any) => void; }
-export default function SellerDashboard({ onNew, onOpenAuction }: SellerDashboardProps) {
+interface SellerDashboardProps { onNew?: () => void; onGoLive?: () => void; onOpenAuction?: (id: any) => void; onOpenOrder?: (id: any) => void; }
+export default function SellerDashboard({ onNew, onGoLive, onOpenAuction }: SellerDashboardProps) {
   ensure();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -76,7 +76,10 @@ export default function SellerDashboard({ onNew, onOpenAuction }: SellerDashboar
           <div className="yd__h1">Panel del vendedor</div>
           <div className="yd__sub">Hola {user?.name?.split(' ')[0] || ''} — esto es lo que pasa con tu tienda hoy.</div>
         </div>
-        <Button variant="primary" iconLeft={<Icon.Plus size={17} />} onClick={onNew}>Nueva publicación</Button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Button variant="secondary" iconLeft={Icon.TrendingUp ? <Icon.TrendingUp size={17} /> : null} onClick={onGoLive}>Iniciar transmisión</Button>
+          <Button variant="primary" iconLeft={<Icon.Plus size={17} />} onClick={onNew}>Nueva publicación</Button>
+        </div>
       </div>
 
       <div className="yd__metrics">

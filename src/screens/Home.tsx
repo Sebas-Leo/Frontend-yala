@@ -4,6 +4,8 @@ import {
   Button, CardSkeleton, EmptyState, Icon,
 } from '../ds';
 import { listListings } from '../api/listings';
+import { listLives } from '../api/live';
+import LiveCard from '../components/LiveCard';
 import { auctionCardFrom } from '../api/adapters';
 import { useFetch } from '../hooks/useFetch';
 import { usePaginatedQuery } from '../hooks/usePaginatedQuery';
@@ -22,6 +24,9 @@ const css = `
 .yh__count{font-size:14px;color:var(--text-muted);}
 .yh__count b{color:var(--text-strong);font-weight:700;}
 .yh__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.yh__lives{margin-bottom:28px;}
+.yh__livesrow{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;}
+.yh__livesrow>*{scroll-snap-align:start;}
 .yh__foot{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:28px;}
 .yh__range{font-size:12px;color:var(--text-subtle);font-family:var(--font-mono);}
 @media(max-width:1080px){.yh{grid-template-columns:1fr}.yh__side{position:static;flex-direction:row;flex-wrap:wrap}.yh__grid{grid-template-columns:repeat(3,1fr)}}
@@ -66,11 +71,15 @@ function Filters({ condition, onCond, minPrice, maxPrice, onPrice, sort, onSort,
   );
 }
 
-interface HomeScreenProps { onOpenAuction?: (id: any) => void }
+interface HomeScreenProps { onOpenAuction?: (id: any) => void; onOpenLive?: (id: any) => void }
 
-export default function HomeScreen({ onOpenAuction }: HomeScreenProps) {
+export default function HomeScreen({ onOpenAuction, onOpenLive }: HomeScreenProps) {
   ensure();
   const { page, size, sort, get, setParams, setPage } = usePaginatedQuery({ defaultSize: 12, defaultSort: 'createdAt,desc' });
+
+  // Active live streams for the top carousel (public endpoint).
+  const { data: livesData } = useFetch((signal) => listLives({ page: 0, size: 12, signal }), []);
+  const lives = livesData?.content || [];
 
   const condition = get('condition');
   const category = get('category');
@@ -133,8 +142,22 @@ export default function HomeScreen({ onOpenAuction }: HomeScreenProps) {
         onClear={clearFilters}
       />
       <div className="yh__main">
+        {lives.length > 0 && (
+          <section className="yh__lives">
+            <div className="yh__livehd">
+              <div className="yh__livett"><span className="yh__livedot" /> En vivo ahora</div>
+              <div className="yh__count"><b>{lives.length}</b> {lives.length === 1 ? 'transmisión' : 'transmisiones'}</div>
+            </div>
+            <div className="yh__livesrow">
+              {lives.map((live) => (
+                <LiveCard key={live.id} live={live} onClick={() => onOpenLive && onOpenLive(live.id)} />
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="yh__livehd">
-          <div className="yh__livett"><span className="yh__livedot" /> Subastas en vivo</div>
+          <div className="yh__livett">Subastas</div>
           <div className="yh__count">
             {loading ? 'Cargando…' : <span><b>{totalElements}</b> {totalElements === 1 ? 'subasta activa' : 'subastas activas'}</span>}
           </div>

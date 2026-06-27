@@ -10,6 +10,8 @@ declare module '*?raw' {
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_DEV_API_TARGET?: string;
+  readonly VITE_WS_URL?: string;
+  readonly VITE_LIVEKIT_URL?: string;
 }
 
 interface ImportMeta {

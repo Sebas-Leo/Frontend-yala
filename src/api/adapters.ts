@@ -110,8 +110,10 @@ export function orderFromDto(dto: any, currentUserId?: any) {
     seller,
     role: isSeller ? 'seller' : 'buyer',
     party: isSeller ? buyer?.name : seller?.name,
-    title: listing?.title || '',
+    // Live-auction orders have no listing; fall back to the DTO's itemTitle.
+    title: listing?.title || dto.itemTitle || '',
     image: listing?.image || PLACEHOLDER_IMG,
+    paymentDeadline: dto.paymentDeadline || null,
   };
 }
 

@@ -59,3 +59,64 @@ export interface AuctionUpdateMessage {
   latestBid: LatestBidInfo | null;
   winnerUsername: string | null; // present only when status === 'FINISHED'
 }
+
+// --- Live streaming DTOs (com.yala.dto.live.*) ----------------------------
+
+export type LiveStatus = 'LIVE' | 'ENDED';
+export type FlashAuctionStatus = 'ACTIVE' | 'SOLD' | 'DESERTED';
+
+export interface LiveSummary {
+  id: number;
+  title: string;
+  status: LiveStatus;
+  coverImageUrl: string | null;
+  sellerName: string | null;
+  sellerId: number | null;
+  startedAt: string;
+}
+
+export interface FlashAuction {
+  id: number;
+  liveStreamId: number;
+  title: string;
+  basePrice: number;
+  bidIncrement: number;
+  currentPrice: number | null;
+  status: FlashAuctionStatus;
+  winnerName: string | null;
+  totalBids: number;
+  startedAt: string;
+}
+
+export interface LiveDetail {
+  id: number;
+  title: string;
+  status: LiveStatus;
+  roomName: string;
+  coverImageUrl: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  seller: { id: number; name: string; isVerifiedSeller?: boolean } | null;
+  activeAuction: FlashAuction | null;
+}
+
+export interface LiveToken {
+  streamId: number;
+  roomName: string;
+  url: string;
+  token: string;
+}
+
+export interface LiveComment {
+  id: number;
+  text: string;
+  createdAt: string;
+  userName: string | null;
+  userId: number | null;
+}
+
+// Broadcast on /topic/live/{id} (com.yala.dto.live.LiveUpdateMessage).
+export interface LiveUpdateMessage {
+  type: 'AUCTION_STARTED' | 'BID' | 'AUCTION_CLOSED' | 'LIVE_ENDED';
+  auction: FlashAuction | null;
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Price, StatusBadge, Button, Avatar, EmptyState, CardSkeleton, Pagination, Icon } from '../ds';
+import { Price, StatusBadge, Button, Avatar, EmptyState, CardSkeleton, Pagination, Countdown, Icon } from '../ds';
 import { listMyOrders } from '../api/orders';
 import { orderFromDto } from '../api/adapters';
 import { useFetch } from '../hooks/useFetch';
@@ -77,6 +77,11 @@ export default function MyOrders({ onOpenOrder }: MyOrdersProps) {
             </div>
             <div className="yo__right">
               <Price value={o.amount} size="md" />
+              {o.status === 'PENDING' && o.paymentDeadline && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--live)' }}>
+                  <Icon.Clock size={13} /> Pagar antes de <Countdown endsAt={o.paymentDeadline} variant="auction" />
+                </div>
+              )}
               <div className="yo__act" onClick={(e) => e.stopPropagation()}>
                 {o.status === 'PENDING' && <Button variant="primary" size="sm" onClick={() => navigate('/checkout?orderId=' + o.id)}>Pagar</Button>}
                 {o.status === 'CONFIRMED' && <Button variant="secondary" size="sm" iconLeft={<Icon.Star size={14} />} onClick={() => navigate('/review/' + o.id)}>Reseñar</Button>}
