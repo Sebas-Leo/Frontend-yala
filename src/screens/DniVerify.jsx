@@ -75,8 +75,8 @@ export default function DniVerify({ onVerify, onBack }) {
       });
     } catch (err) {
       setCamError(err && err.name === 'NotAllowedError'
-        ? 'Permiso de cámara denegado. Podés ingresar el DNI a mano.'
-        : 'No pudimos abrir la cámara. Ingresá el DNI a mano.');
+        ? 'Permiso de cámara denegado. Puedes ingresar el DNI a mano.'
+        : 'No pudimos abrir la cámara. Ingresa el DNI a mano.');
     }
   };
 
@@ -120,10 +120,10 @@ export default function DniVerify({ onVerify, onBack }) {
       } else {
         setError(res.reason === 'invalid-format'
           ? 'El DNI debe tener 8 dígitos.'
-          : 'No pudimos verificar ese DNI con RENIEC. Revisá los datos e intentá de nuevo.');
+          : 'No pudimos verificar ese DNI con RENIEC. Revisa los datos e intenta de nuevo.');
       }
     } catch {
-      setError('No pudimos completar la verificación. Intentá de nuevo.');
+      setError('No pudimos completar la verificación. Intenta de nuevo.');
     } finally {
       setBusy(false);
     }
@@ -134,7 +134,7 @@ export default function DniVerify({ onVerify, onBack }) {
       <div className="dv__back" onClick={() => { stopCamera(); onBack && onBack(); }}><Icon.ChevronLeft size={16} /> Volver</div>
       <div className="dv__card">
         <div className="dv__icon"><Icon.Shield size={26} /></div>
-        <div className="dv__h1">Verificá tu identidad</div>
+        <div className="dv__h1">Verifica tu identidad</div>
         <div className="dv__sub">Yala pide tu DNI una única vez antes de tu primera puja o compra. Es para mantener el marketplace seguro entre desconocidos.</div>
 
         {/* Camera sensor */}

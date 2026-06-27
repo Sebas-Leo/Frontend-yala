@@ -60,7 +60,7 @@ export default function SellerProfile({ onBack, onOpenAuction }) {
   if (!ready) {
     return (
       <div className="sp">
-        <EmptyState icon={<Icon.User size={26} />} title="Perfil no disponible" description="Iniciá sesión para ver tu perfil." />
+        <EmptyState icon={<Icon.User size={26} />} title="Perfil no disponible" description="Inicia sesión para ver tu perfil." />
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function SellerProfile({ onBack, onOpenAuction }) {
         reviewsQ.loading ? (
           <div className="sp__reviews">{Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}</div>
         ) : reviews.length === 0 ? (
-          <EmptyState icon={<Icon.Star size={24} />} title="Sin reseñas todavía" description="Cuando complete ventas, las reseñas aparecerán acá." />
+          <EmptyState icon={<Icon.Star size={24} />} title="Sin reseñas todavía" description="Cuando complete ventas, las reseñas aparecerán aquí." />
         ) : (
           <>
             <div className="sp__reviews">

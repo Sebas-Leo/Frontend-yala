@@ -146,7 +146,7 @@ export default function HomeScreen({ onOpenAuction }) {
             actions={<Button variant="secondary" onClick={refetch}>Reintentar</Button>} />
         ) : items.length === 0 ? (
           <EmptyState icon={Icon.SearchX ? <Icon.SearchX size={26} /> : <Icon.Search size={26} />} title="No hay subastas con esos filtros"
-            description="Probá ampliar el rango de puja o quitar algunas condiciones."
+            description="Prueba ampliar el rango de puja o quitar algunas condiciones."
             actions={<Button variant="secondary" onClick={clearFilters}>Limpiar filtros</Button>} />
         ) : (
           <>

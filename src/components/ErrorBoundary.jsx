@@ -33,7 +33,7 @@ export default class ErrorBoundary extends React.Component {
         <div style={{ maxWidth: 560, margin: '0 auto', padding: '72px 24px', textAlign: 'center', fontFamily: 'var(--font-sans)' }}>
           <h2 style={{ color: 'var(--text-strong)', marginBottom: 8 }}>Algo salió mal</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>
-            Ocurrió un error inesperado al mostrar esta sección. Podés reintentar o volver al inicio.
+            Ocurrió un error inesperado al mostrar esta sección. Puedes reintentar o volver al inicio.
           </p>
           <Button onClick={() => this.setState({ error: null })}>Reintentar</Button>
         </div>

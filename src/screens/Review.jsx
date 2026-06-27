@@ -25,7 +25,7 @@ const css = `
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
-const RATING_LABELS = { 0: 'Tocá una estrella', 1: 'Muy malo', 2: 'Malo', 3: 'Regular', 4: 'Bueno', 5: 'Excelente' };
+const RATING_LABELS = { 0: 'Toca una estrella', 1: 'Muy malo', 2: 'Malo', 3: 'Regular', 4: 'Bueno', 5: 'Excelente' };
 
 export default function Review({ onBack }) {
   ensure();
@@ -61,7 +61,7 @@ export default function Review({ onBack }) {
   if (error || !o) {
     return <div className="rv">
       <EmptyState icon={<Icon.AlertTriangle size={26} />} title="No pudimos cargar la orden"
-        description={error?.message || 'La orden no existe o no tenés acceso.'}
+        description={error?.message || 'La orden no existe o no tienes acceso.'}
         actions={<Button variant="secondary" onClick={() => navigate('/orders')}>Mis órdenes</Button>} />
     </div>;
   }
@@ -69,8 +69,8 @@ export default function Review({ onBack }) {
   return (
     <div className="rv">
       <div className="rv__back" onClick={onBack}><Icon.ChevronLeft size={16} /> Mis órdenes</div>
-      <div className="rv__h1">Dejá tu reseña</div>
-      <div className="rv__sub">La reseña es mutua: vos calificás a la contraparte y la contraparte te califica a vos.</div>
+      <div className="rv__h1">Deja tu reseña</div>
+      <div className="rv__sub">La reseña es mutua: tú calificas a la contraparte y la contraparte te califica a ti.</div>
 
       <div className="rv__card">
         <div className="rv__item">

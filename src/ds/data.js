@@ -67,12 +67,12 @@
 
   const notifications = [
     { id: 'n1', type: 'BID_OUTBID', tone: 'warning', icon: 'Gavel', title: '¡Te superaron!', msg: 'Alguien pujó S/. 3,350 por Umbreon VMAX Alt Art.', time: 'hace 1 min', read: false },
-    { id: 'n2', type: 'AUCTION_WON', tone: 'live', icon: 'Gavel', title: '¡Ganaste la subasta!', msg: 'Charizard Shadowless es tuyo por S/. 8,400. Pagá en 48h.', time: 'hace 22 min', read: false },
+    { id: 'n2', type: 'AUCTION_WON', tone: 'live', icon: 'Gavel', title: '¡Ganaste la subasta!', msg: 'Charizard Shadowless es tuyo por S/. 8,400. Paga en 48h.', time: 'hace 22 min', read: false },
     { id: 'n3', type: 'PAYMENT_RECEIVED', tone: 'success', icon: 'Wallet', title: 'Pago confirmado', msg: 'Recibimos tu pago de la orden #1039.', time: 'hace 3 h', read: false },
     { id: 'n4', type: 'NEW_BID', tone: 'brand', icon: 'Gavel', title: 'Nueva puja en tu subasta', msg: 'Lugia Neo recibió una puja de S/. 2,750.', time: 'hace 5 h', read: true },
     { id: 'n5', type: 'SALE_CONFIRMED', tone: 'success', icon: 'Check', title: 'Venta confirmada', msg: 'Blastoise Base Set fue confirmada por el comprador.', time: 'ayer', read: true },
     { id: 'n6', type: 'SELLER_VERIFIED', tone: 'brand', icon: 'Shield', title: 'Identidad verificada', msg: 'Tu cuenta ahora muestra el ícono de identidad verificada.', time: 'hace 2 días', read: true },
-    { id: 'n7', type: 'AUCTION_NO_BIDS', tone: 'warning', icon: 'AlertTriangle', title: 'Subasta sin pujas', msg: 'Mewtwo Shadowless cerró sin ofertas. Podés relistarla.', time: 'hace 3 días', read: true },
+    { id: 'n7', type: 'AUCTION_NO_BIDS', tone: 'warning', icon: 'AlertTriangle', title: 'Subasta sin pujas', msg: 'Mewtwo Shadowless cerró sin ofertas. Puedes relistarla.', time: 'hace 3 días', read: true },
   ];
 
   // Categorías reales del backend (dinámicas vía GET /api/v1/categories).

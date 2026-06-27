@@ -113,8 +113,8 @@ export default function SellerDashboard({ onNew, onOpenAuction }) {
           })}
         </div>
       ) : all.length === 0 ? (
-        <EmptyState icon={<Icon.Package size={24} />} title="Todavía no tenés publicaciones"
-          description="Creá tu primera publicación para empezar a vender en Yala."
+        <EmptyState icon={<Icon.Package size={24} />} title="Todavía no tienes publicaciones"
+          description="Crea tu primera publicación para empezar a vender en Yala."
           actions={<Button variant="primary" onClick={onNew}>Nueva publicación</Button>} />
       ) : (
         <div className="yd__grid">

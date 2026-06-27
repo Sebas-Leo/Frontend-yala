@@ -72,7 +72,7 @@ export default function Notifications() {
           description={error.message} actions={<Button variant="secondary" onClick={refetch}>Reintentar</Button>} />
       ) : items.length === 0 ? (
         <EmptyState icon={<Icon.Bell size={26} />} title="Sin notificaciones"
-          description="Cuando pujes, ganes o vendas, te avisamos por acá." />
+          description="Cuando pujes, ganes o vendas, te avisamos por aquí." />
       ) : (
         <>
           <div className="yn__list">

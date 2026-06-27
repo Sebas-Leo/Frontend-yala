@@ -90,7 +90,7 @@ http.interceptors.response.use(
         return Promise.reject(error);
       }
       return Promise.reject(
-        new ApiError(0, 'NETWORK_ERROR', 'No pudimos conectar con el servidor. Revisá tu conexión.'),
+        new ApiError(0, 'NETWORK_ERROR', 'No pudimos conectar con el servidor. Revisa tu conexión.'),
       );
     }
 

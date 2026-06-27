@@ -46,7 +46,7 @@ export default function Admin() {
       setCatName(''); setCatDesc('');
       catsQ.refetch();
     } catch (err) {
-      toast.error('No se pudo crear la categoría', err.message || 'Revisá el nombre (debe ser único).');
+      toast.error('No se pudo crear la categoría', err.message || 'Revisa el nombre (debe ser único).');
     } finally { setBusy(false); }
   };
 
@@ -59,7 +59,7 @@ export default function Admin() {
       setTagName('');
       tagsQ.refetch();
     } catch (err) {
-      toast.error('No se pudo crear la etiqueta', err.message || 'Revisá el nombre (debe ser único).');
+      toast.error('No se pudo crear la etiqueta', err.message || 'Revisa el nombre (debe ser único).');
     } finally { setBusy(false); }
   };
 
@@ -98,7 +98,7 @@ export default function Admin() {
           {catsQ.loading ? (
             <div style={{ padding: 16 }}><CardSkeleton /></div>
           ) : categories.length === 0 ? (
-            <EmptyState icon={<Icon.LayoutGrid size={24} />} title="Sin categorías" description="Creá la primera categoría del marketplace." />
+            <EmptyState icon={<Icon.LayoutGrid size={24} />} title="Sin categorías" description="Crea la primera categoría del marketplace." />
           ) : categories.map((c) => (
             <div className="ad__row" key={c.id}>
               <div className="ad__meta">
@@ -120,7 +120,7 @@ export default function Admin() {
           {tagsQ.loading ? (
             <div style={{ padding: 16 }}><CardSkeleton /></div>
           ) : tags.length === 0 ? (
-            <EmptyState icon={<Icon.Star size={24} />} title="Sin etiquetas" description="Creá la primera etiqueta reutilizable." />
+            <EmptyState icon={<Icon.Star size={24} />} title="Sin etiquetas" description="Crea la primera etiqueta reutilizable." />
           ) : tags.map((t) => (
             <div className="ad__row" key={t.id}>
               <div className="ad__meta"><div className="ad__name">{t.name}</div></div>

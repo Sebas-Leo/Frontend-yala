@@ -75,10 +75,10 @@ let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }
 
 const STEPS = [
-  { icon: 'Search', title: 'Explorá', desc: 'Buscá entre miles de cartas, Funkos y comics de vendedores verificados.' },
-  { icon: 'Gavel', title: 'Pujá', desc: 'Ofertá en vivo por las piezas que querés. La puja más alta gana.' },
-  { icon: 'Star', title: 'Ganá', desc: 'Si liderás cuando termina la subasta, el ítem es tuyo.' },
-  { icon: 'Package', title: 'Recibí', desc: 'Pagás seguro y el vendedor te envía tu coleccionable a casa.' },
+  { icon: 'Search', title: 'Explora', desc: 'Busca entre miles de cartas, Funkos y comics de vendedores verificados.' },
+  { icon: 'Gavel', title: 'Puja', desc: 'Oferta en vivo por las piezas que quieres. La puja más alta gana.' },
+  { icon: 'Star', title: 'Gana', desc: 'Si lideras cuando termina la subasta, el ítem es tuyo.' },
+  { icon: 'Package', title: 'Recibe', desc: 'Pagas seguro y el vendedor te envía tu coleccionable a casa.' },
 ];
 
 function HowItWorksStep({ icon, index, title, desc }) {
@@ -126,7 +126,7 @@ export default function LandingScreen({ onOpenAuction }) {
       <section className="yl__hero">
         <div className="yl__wrap">
           <span className="yl__pill"><span className="yl__dot" /> Subastas en vivo todos los días</span>
-          <h1 className="yl__title">Subastá y coleccioná <em>cartas que valen la pena</em></h1>
+          <h1 className="yl__title">Subasta y colecciona <em>cartas que valen la pena</em></h1>
           <p className="yl__sub">
             El marketplace de subastas de coleccionables geek en LatAm. Pokémon TCG, Funko Pop y comics,
             con vendedores verificados y pagos seguros en soles.
@@ -184,7 +184,7 @@ export default function LandingScreen({ onOpenAuction }) {
             <EmptyState
               icon={<Icon.Gavel size={26} />}
               title="No hay subastas activas ahora mismo"
-              description="Volvé pronto: cada día se suman nuevas subastas. Mientras tanto, explorá el catálogo completo."
+              description="Vuelve pronto: cada día se suman nuevas subastas. Mientras tanto, explora el catálogo completo."
               actions={<Button variant="primary" iconLeft={<Icon.Search size={17} />} onClick={() => navigate('/')}>Explorar el catálogo</Button>}
             />
           ) : (
@@ -210,8 +210,8 @@ export default function LandingScreen({ onOpenAuction }) {
         <section className="yl__sec">
           <div className="yl__wrap">
             <div className="yl__sechd">
-              <h2 className="yl__sectt">Explorá por categoría</h2>
-              <p className="yl__secsb">Encontrá justo lo que coleccionás.</p>
+              <h2 className="yl__sectt">Explora por categoría</h2>
+              <p className="yl__secsb">Encuentra justo lo que coleccionas.</p>
             </div>
             <div className="yl__cats">
               {categories.map((cat) => (

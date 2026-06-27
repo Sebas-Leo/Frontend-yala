@@ -26,8 +26,8 @@ const DURATIONS = [1, 3, 5, 7];
 
 function validate(v) {
   const e = {};
-  if (!v.listingId) e.listingId = 'Elegí una publicación.';
-  if (!v.startingPrice || Number(v.startingPrice) < 0) e.startingPrice = 'Ingresá un precio inicial válido.';
+  if (!v.listingId) e.listingId = 'Elige una publicación.';
+  if (!v.startingPrice || Number(v.startingPrice) < 0) e.startingPrice = 'Ingresa un precio inicial válido.';
   return e;
 }
 
@@ -67,7 +67,7 @@ export default function CreateAuction({ onBack }) {
         toast.success('Subasta creada', 'La subasta arranca según lo que programaste.', 'Gavel');
         navigate('/seller');
       } catch (err) {
-        toast.error('No se pudo crear la subasta', err.message || 'Revisá los datos e intentá de nuevo.');
+        toast.error('No se pudo crear la subasta', err.message || 'Revisa los datos e intenta de nuevo.');
       }
     });
 
@@ -75,16 +75,16 @@ export default function CreateAuction({ onBack }) {
     <div className="ca">
       <div className="ca__back" onClick={onBack}><Icon.ChevronLeft size={16} /> Panel del vendedor</div>
       <div className="ca__h1">Nueva subasta</div>
-      <div className="ca__sub">Elegí una publicación tuya y definí el precio inicial y la duración.</div>
+      <div className="ca__sub">Elige una publicación tuya y define el precio inicial y la duración.</div>
 
       {!listingsQ.loading && eligible.length === 0 ? (
-        <EmptyState icon={<Icon.Package size={24} />} title="No tenés publicaciones disponibles"
-          description="Creá primero una publicación en modo subasta para poder abrir una subasta."
+        <EmptyState icon={<Icon.Package size={24} />} title="No tienes publicaciones disponibles"
+          description="Crea primero una publicación en modo subasta para poder abrir una subasta."
           actions={<Button variant="primary" onClick={() => navigate('/seller/new-listing')}>Crear publicación</Button>} />
       ) : (
         <form className="ca__card" onSubmit={(e) => { e.preventDefault(); submit(); }}>
           <div>
-            <Select label="Publicación" placeholder={listingsQ.loading ? 'Cargando…' : 'Elegí una de tus publicaciones'}
+            <Select label="Publicación" placeholder={listingsQ.loading ? 'Cargando…' : 'Elige una de tus publicaciones'}
               value={form.values.listingId} onChange={form.handleChange('listingId')}
               options={eligible.map((l) => ({ value: String(l.id), label: l.title }))} required />
             {form.errors.listingId && <div className="ca__err">{form.errors.listingId}</div>}

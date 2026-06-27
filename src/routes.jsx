@@ -40,7 +40,7 @@ export function buildRoutes(ctx) {
   const handleAuth = (profile) => navigate(profile && profile.role === 'SELLER' ? '/seller' : '/');
   const verifyIdentity = () => {
     auth.setIdentityVerified(true);
-    toast.success('Identidad verificada', 'Ya podés pujar y comprar en Yala.', 'Shield');
+    toast.success('Identidad verificada', 'Ya puedes pujar y comprar en Yala.', 'Shield');
   };
 
   return [
@@ -99,7 +99,7 @@ export function buildRoutes(ctx) {
         <CreateListing
           onBack={() => navigate('/seller')}
           onCreate={() => {
-            toast.success('Ítem creado', 'Ahora definí el precio inicial y la duración de la subasta.');
+            toast.success('Ítem creado', 'Ahora define el precio inicial y la duración de la subasta.');
             navigate('/seller/new-auction');
           }}
         />

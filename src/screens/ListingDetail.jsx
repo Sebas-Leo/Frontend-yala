@@ -61,7 +61,7 @@ export default function ListingDetail({ verified = false, onRequireDni, onBack }
 
   const buy = () => {
     if (!isAuthenticated) {
-      toast.error('Iniciá sesión', 'Necesitás una cuenta para comprar en Yala.');
+      toast.error('Inicia sesión', 'Necesitas una cuenta para comprar en Yala.');
       navigate('/login');
       return;
     }
@@ -74,11 +74,11 @@ export default function ListingDetail({ verified = false, onRequireDni, onBack }
     try {
       const order = await createOrder({ listingId: l.id });
       setShowConfirm(false);
-      toast.success('Orden creada', 'Tenés 48h para completar el pago.', 'Wallet');
+      toast.success('Orden creada', 'Tienes 48h para completar el pago.', 'Wallet');
       navigate('/checkout?orderId=' + order.id);
     } catch (err) {
       setShowConfirm(false);
-      toast.error('No se pudo crear la orden', err.message || 'Intentá nuevamente.');
+      toast.error('No se pudo crear la orden', err.message || 'Intenta nuevamente.');
     } finally {
       setBuying(false);
     }
@@ -179,11 +179,11 @@ export default function ListingDetail({ verified = false, onRequireDni, onBack }
 
       {showConfirm && (
         <Dialog open onClose={() => setShowConfirm(false)} tone="brand" icon={<Icon.Wallet size={20} />}
-          title="Confirmá tu compra"
+          title="Confirma tu compra"
           description={`Vas a comprar ${l.title} por S/. ${Number(l.fixedPrice || 0).toLocaleString('es-PE')}.`}
           footer={<><Button variant="ghost" onClick={() => setShowConfirm(false)} disabled={buying}>Cancelar</Button><Button variant="primary" onClick={confirmBuy} disabled={buying}>{buying ? 'Creando…' : 'Ir a pagar'}</Button></>}>
           <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55 }}>
-            Se creará una orden en estado <b style={{ color: 'var(--text-strong)' }}>pendiente</b>. Tenés 48h para completar el pago.
+            Se creará una orden en estado <b style={{ color: 'var(--text-strong)' }}>pendiente</b>. Tienes 48h para completar el pago.
           </div>
         </Dialog>
       )}

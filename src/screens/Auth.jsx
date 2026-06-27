@@ -42,7 +42,7 @@ export default function Auth({ onAuth }) {
       const profile = await action();
       if (onAuth) onAuth(profile);
     } catch (err) {
-      setError((err && err.message) || 'No pudimos completar la operación. Intentá de nuevo.');
+      setError((err && err.message) || 'No pudimos completar la operación. Intenta de nuevo.');
     } finally {
       setBusy(false);
     }
@@ -75,14 +75,14 @@ export default function Auth({ onAuth }) {
         {tab === 'login' && (
           <form className="au__form" onSubmit={doLogin}>
             {errorBanner}
-            <Input label="Email" type="email" placeholder="vos@email.com" required
+            <Input label="Email" type="email" placeholder="tu@email.com" required
               value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="Contraseña" type="password" placeholder="••••••••" required
               value={password} onChange={(e) => setPassword(e.target.value)} />
             <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
               {busy ? 'Ingresando…' : 'Ingresar'}
             </Button>
-            <div className="au__foot">¿No tenés cuenta? <span className="au__link" onClick={() => switchTab('register')}>Creá una</span></div>
+            <div className="au__foot">¿No tienes cuenta? <span className="au__link" onClick={() => switchTab('register')}>Crea una</span></div>
           </form>
         )}
 
@@ -91,12 +91,12 @@ export default function Auth({ onAuth }) {
             {errorBanner}
             <Input label="Nombre completo" placeholder="Diego Ramírez" required
               value={name} onChange={(e) => setName(e.target.value)} />
-            <Input label="Email" type="email" placeholder="vos@email.com" required
+            <Input label="Email" type="email" placeholder="tu@email.com" required
               value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="Contraseña" type="password" hint="Mín. 8 caracteres." required
               value={password} onChange={(e) => setPassword(e.target.value)} />
             <Input label="Fecha de nacimiento" type="date" required />
-            <div className="au__note"><Icon.Shield size={14} style={{ flex: 'none', marginTop: 1 }} /> Tenés que ser mayor de 18. El DNI se pide una sola vez, recién al pujar o comprar.</div>
+            <div className="au__note"><Icon.Shield size={14} style={{ flex: 'none', marginTop: 1 }} /> Tienes que ser mayor de 18. El DNI se pide una sola vez, solo al pujar o comprar.</div>
             <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
               {busy ? 'Creando…' : 'Crear cuenta'}
             </Button>

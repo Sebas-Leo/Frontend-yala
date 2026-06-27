@@ -133,7 +133,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
 
   const onPlaceClick = () => {
     if (!isAuthenticated) {
-      toast.error('Iniciá sesión', 'Necesitás una cuenta para pujar en Yala.');
+      toast.error('Inicia sesión', 'Necesitas una cuenta para pujar en Yala.');
       navigate('/login');
       return;
     }
@@ -151,7 +151,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
       auctionQ.refetch();
     } catch (err) {
       setShowConfirm(false);
-      toast.error('No se pudo pujar', err.message || 'Intentá nuevamente.');
+      toast.error('No se pudo pujar', err.message || 'Intenta nuevamente.');
     } finally {
       setSubmitting(false);
     }
@@ -183,7 +183,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
     return (
       <div className="yal__empty">
         <EmptyState icon={<Icon.Gavel size={26} />} title="Esta publicación no es una subasta"
-          description="Es una venta a precio fijo. Podés comprarla directamente."
+          description="Es una venta a precio fijo. Puedes comprarla directamente."
           actions={<Button variant="primary" onClick={() => navigate('/listing/' + listing.id)}>Ver publicación</Button>} />
       </div>
     );
@@ -244,7 +244,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
                 </div>
                 <div className="yal__hint">
                   <Icon.AlertTriangle size={14} style={{ color: 'var(--warning)', flex: 'none', marginTop: 1 }} />
-                  <span>Tu puja debe superar la actual. No podés pujar dos veces seguidas ni sobre tu propia subasta.</span>
+                  <span>Tu puja debe superar la actual. No puedes pujar dos veces seguidas ni sobre tu propia subasta.</span>
                 </div>
               </>
             )}
@@ -269,7 +269,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
                   const mine = user && b.bidderId === user.id;
                   return (
                     <div key={b.id} className={`yal__brow${b.leader ? ' yal__brow--lead' : ''}`}>
-                      <span className="yal__bu"><Avatar name={b.user} size={22} /> {mine ? 'vos' : b.user} {b.leader && <span className="yal__leadtag">líder</span>}</span>
+                      <span className="yal__bu"><Avatar name={b.user} size={22} /> {mine ? 'tú' : b.user} {b.leader && <span className="yal__leadtag">líder</span>}</span>
                       <span className="yal__btime">{b.time}</span>
                       <span className="yal__bamt">S/. {b.amount.toLocaleString('es-PE')}</span>
                     </div>
@@ -283,7 +283,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }) 
 
       {showConfirm && (
         <Dialog open onClose={() => setShowConfirm(false)} tone="live" icon={<Icon.Gavel size={20} />}
-          title="Confirmá tu puja"
+          title="Confirma tu puja"
           description={`Vas a pujar S/. ${bid.toLocaleString('es-PE')} por ${listing.title}.`}
           footer={<><Button variant="ghost" onClick={() => setShowConfirm(false)} disabled={submitting}>Cancelar</Button><Button variant="live" onClick={confirmBid} disabled={submitting}>{submitting ? 'Pujando…' : 'Confirmar puja'}</Button></>}>
           <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55 }}>

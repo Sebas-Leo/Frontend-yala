@@ -37,9 +37,9 @@ const CONDITIONS = ['PSA 10 (Gem Mint)', 'PSA 9 (Mint)', 'PSA 8 (Near Mint)', 'P
 function validate(v) {
   const e = {};
   if (!v.title || v.title.trim().length < 10) e.title = 'Mínimo 10 caracteres.';
-  if (!v.categoryId) e.categoryId = 'Elegí una categoría.';
-  if (!v.condition) e.condition = 'Elegí la condición.';
-  if (v.mode === 'FIXED' && (!v.fixedPrice || Number(v.fixedPrice) <= 0)) e.fixedPrice = 'Ingresá un precio válido.';
+  if (!v.categoryId) e.categoryId = 'Elige una categoría.';
+  if (!v.condition) e.condition = 'Elige la condición.';
+  if (v.mode === 'FIXED' && (!v.fixedPrice || Number(v.fixedPrice) <= 0)) e.fixedPrice = 'Ingresa un precio válido.';
   return e;
 }
 
@@ -93,17 +93,17 @@ export default function CreateListing({ onBack }) {
             uploadFailed = true;
           }
         }
-        if (uploadFailed) toast.error('Algunas imágenes no se subieron', 'La publicación se creó igual; podés reintentar luego.');
+        if (uploadFailed) toast.error('Algunas imágenes no se subieron', 'La publicación se creó igual; puedes reintentar luego.');
 
         if (v.mode === 'AUCTION') {
-          toast.success('Ítem creado', 'Ahora definí el precio inicial y la duración de la subasta.');
+          toast.success('Ítem creado', 'Ahora define el precio inicial y la duración de la subasta.');
           navigate('/seller/new-auction', { state: { listingId: listing.id, title: listing.title } });
         } else {
           toast.success('Publicación creada', 'Ya está visible en el marketplace.', 'Check');
           navigate('/listing/' + listing.id);
         }
       } catch (err) {
-        toast.error('No se pudo crear la publicación', err.message || 'Revisá los datos e intentá de nuevo.');
+        toast.error('No se pudo crear la publicación', err.message || 'Revisa los datos e intenta de nuevo.');
       }
     });
 
@@ -139,13 +139,13 @@ export default function CreateListing({ onBack }) {
 
         <div className="cl__row">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Select label="Categoría" placeholder={catsQ.loading ? 'Cargando…' : 'Elegí una categoría'}
+            <Select label="Categoría" placeholder={catsQ.loading ? 'Cargando…' : 'Elige una categoría'}
               value={form.values.categoryId} onChange={form.handleChange('categoryId')}
               options={categories.map((c) => ({ value: String(c.id), label: c.name }))} required />
             {form.errors.categoryId && <div className="cl__err">{form.errors.categoryId}</div>}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Select label="Condición / PSA" placeholder="Elegí la condición"
+            <Select label="Condición / PSA" placeholder="Elige la condición"
               value={form.values.condition} onChange={form.handleChange('condition')}
               options={CONDITIONS} required />
             {form.errors.condition && <div className="cl__err">{form.errors.condition}</div>}

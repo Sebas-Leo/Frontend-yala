@@ -72,10 +72,10 @@ export default function Checkout({ onBack }) {
       if (pref?.initPoint) {
         window.location.href = pref.initPoint;
       } else {
-        toast.error('Pago no disponible', 'No recibimos el enlace de pago. Intentá más tarde.');
+        toast.error('Pago no disponible', 'No recibimos el enlace de pago. Intenta más tarde.');
       }
     } catch (err) {
-      toast.error('No se pudo iniciar el pago', err.message || 'Intentá nuevamente.');
+      toast.error('No se pudo iniciar el pago', err.message || 'Intenta nuevamente.');
     } finally {
       setBusy(false);
     }
@@ -88,7 +88,7 @@ export default function Checkout({ onBack }) {
       toast.success('Orden cancelada', 'La orden fue cancelada.');
       refetch();
     } catch (err) {
-      toast.error('No se pudo cancelar', err.message || 'Intentá nuevamente.');
+      toast.error('No se pudo cancelar', err.message || 'Intenta nuevamente.');
     } finally {
       setBusy(false);
     }
@@ -101,7 +101,7 @@ export default function Checkout({ onBack }) {
       toast.success('Orden confirmada', 'Confirmaste la venta.');
       refetch();
     } catch (err) {
-      toast.error('No se pudo confirmar', err.message || 'Intentá nuevamente.');
+      toast.error('No se pudo confirmar', err.message || 'Intenta nuevamente.');
     } finally {
       setBusy(false);
     }
@@ -109,7 +109,7 @@ export default function Checkout({ onBack }) {
 
   if (!orderId) {
     return <div className="yc"><EmptyState icon={<Icon.Inbox size={26} />} title="Orden no especificada"
-      description="Volvé a tus órdenes y elegí una." actions={<Button onClick={() => navigate('/orders')}>Mis órdenes</Button>} /></div>;
+      description="Vuelve a tus órdenes y elige una." actions={<Button onClick={() => navigate('/orders')}>Mis órdenes</Button>} /></div>;
   }
   if (loading) {
     return <div className="yc"><Skeleton style={{ height: 80, borderRadius: 12, marginBottom: 18 }} />
@@ -117,7 +117,7 @@ export default function Checkout({ onBack }) {
   }
   if (error || !o) {
     return <div className="yc"><EmptyState icon={<Icon.AlertTriangle size={26} />} title="No pudimos cargar la orden"
-      description={error?.message || 'La orden no existe o no tenés acceso.'}
+      description={error?.message || 'La orden no existe o no tienes acceso.'}
       actions={<Button variant="secondary" onClick={() => navigate('/orders')}>Mis órdenes</Button>} /></div>;
   }
 
@@ -144,8 +144,8 @@ export default function Checkout({ onBack }) {
             <div className="yc__deadline">
               <div className="yc__dlicon"><Icon.Clock size={22} /></div>
               <div style={{ flex: 1 }}>
-                <div className="yc__dltt">Tenés 48h para completar el pago</div>
-                <div className="yc__dlsub">Si no pagás a tiempo, la orden se ofrece al 2º mejor postor.</div>
+                <div className="yc__dltt">Tienes 48h para completar el pago</div>
+                <div className="yc__dlsub">Si no pagas a tiempo, la orden se ofrece al 2º mejor postor.</div>
               </div>
               <Countdown endsAt={payBy} variant="order" format="inline" />
             </div>
