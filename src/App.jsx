@@ -5,6 +5,7 @@ import { useToast } from './context/ToastContext.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import AppShell from './screens/AppShell.jsx';
+import Footer from './components/Footer.jsx';
 import { buildRoutes } from './routes.jsx';
 
 function Loading() {
@@ -66,6 +67,7 @@ export default function App() {
           </React.Suspense>
         </ErrorBoundary>
       </div>
+      <Footer />
     </>
   );
 }

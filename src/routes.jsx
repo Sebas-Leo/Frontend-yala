@@ -6,6 +6,7 @@
 import React from 'react';
 
 const Home = React.lazy(() => import('./screens/Home.jsx'));
+const Landing = React.lazy(() => import('./screens/Landing.jsx'));
 const AuctionLive = React.lazy(() => import('./screens/AuctionLive.jsx'));
 const ListingDetail = React.lazy(() => import('./screens/ListingDetail.jsx'));
 const SellerProfile = React.lazy(() => import('./screens/SellerProfile.jsx'));
@@ -44,6 +45,7 @@ export function buildRoutes(ctx) {
 
   return [
     { path: '/', element: <Home onOpenAuction={(id) => navigate('/auction/' + id)} /> },
+    { path: '/inicio', element: <Landing onOpenAuction={(id) => navigate('/auction/' + id)} /> },
     {
       path: '/auction/:id',
       element: (
