@@ -134,7 +134,7 @@ const AUCTION_STEPS = [
 
 const CUSTODY_STEPS = [
   { icon: 'CreditCard', title: 'Ganas y pagas', desc: 'Completas el pago dentro de Yala vía Stripe. El dinero todavía no le llega al vendedor.' },
-  { icon: 'Lock', title: 'Yala retiene el pago', desc: 'Tu dinero queda en custodia en Yala durante todo el envío (entre 7 y 15 días).' },
+  { icon: 'Shield', title: 'Yala retiene el pago', desc: 'Tu dinero queda en custodia en Yala durante todo el envío (entre 7 y 15 días).' },
   { icon: 'Truck', title: 'Recibes tu coleccionable', desc: 'Cuando llega el producto a tus manos, confirmas la recepción en la plataforma.' },
   { icon: 'Wallet', title: 'Recién ahí el vendedor cobra', desc: 'Yala libera el pago al vendedor: recibe el 92% del precio final (Yala retiene 8% de comisión).' },
 ];
@@ -147,7 +147,7 @@ const WHY = [
 
 const SELLERS = [
   {
-    icon: 'Store', title: 'Tiendas especializadas',
+    icon: 'LayoutGrid', title: 'Tiendas especializadas',
     desc: 'Regístrate con tus datos comerciales y empieza a publicar desde el día 1, sin requisitos previos.',
     points: ['Comisión del 8% solo sobre el precio final de cada venta.', 'Recibes el 92% neto directo en tu cuenta bancaria (CCI).'],
   },
@@ -355,7 +355,7 @@ export default function LandingScreen({ onOpenAuction }) {
           </div>
           <div className="yl__sellers">
             {SELLERS.map((s) => {
-              const Glyph = Icon[s.icon] || Icon.Store;
+              const Glyph = Icon[s.icon] || Icon.Tag;
               return (
                 <div className="yl__scard" key={s.title}>
                   <div className="yl__shd">
@@ -373,7 +373,7 @@ export default function LandingScreen({ onOpenAuction }) {
             })}
           </div>
           <div className="yl__cta">
-            <Button variant="primary" size="lg" iconLeft={<Icon.Store size={18} />} onClick={goRegister}>
+            <Button variant="primary" size="lg" iconLeft={<Icon.Plus size={18} />} onClick={goRegister}>
               Quiero vender en Yala
             </Button>
           </div>
