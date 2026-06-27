@@ -80,8 +80,8 @@ const css = `
 
 /* Final CTA */
 .yl__final{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-hover,var(--brand)) 100%);border-radius:var(--radius-xl);padding:54px 32px;text-align:center;margin:8px 0;}
-.yl__finalt{font:var(--weight-extrabold) 30px/1.2 var(--font-sans);letter-spacing:-.01em;color:#fff;margin:0 auto;max-width:620px;}
-.yl__finalp{margin:14px auto 26px;max-width:520px;font-size:16px;line-height:1.55;color:rgba(255,255,255,.88);}
+.yl__final .yl__finalt{font:var(--weight-extrabold) 30px/1.2 var(--font-sans);letter-spacing:-.01em;color:#fff;margin:0 auto;max-width:620px;text-align:center;}
+.yl__final .yl__finalp{margin:14px auto 26px;max-width:520px;font-size:16px;line-height:1.55;color:rgba(255,255,255,.88);text-align:center;}
 
 /* Responsive */
 @media(max-width:980px){
@@ -102,7 +102,7 @@ const css = `
   .yl__sectt{font-size:25px;}
   .yl__flow,.yl__grid{grid-template-columns:1fr;}
   .yl__cta .yds-btn{width:100%;}
-  .yl__finalt{font-size:25px;}
+  .yl__final .yl__finalt{font-size:25px;}
 }
 `;
 let ic = false;
@@ -129,11 +129,11 @@ const AUCTION_STEPS = [
   { icon: 'Shield', title: 'Regístrate y verifica tu identidad', desc: 'Solo necesitas tu DNI (8 dígitos) para poder pujar. Es gratis y toma menos de 1 minuto.' },
   { icon: 'Search', title: 'Encuentra el coleccionable que buscas', desc: 'Cada artículo tiene fotos reales y condición declarada por el vendedor. Las subastas duran 1, 3, 5 o 7 días.' },
   { icon: 'Gavel', title: 'Haz tu puja y sigue en tiempo real', desc: 'Ingresa el monto que ofreces. Si alguien te supera, te avisamos al instante para que decidas si sigues pujando.' },
-  { icon: 'CreditCard', title: 'Si ganas, tienes 48 horas para pagar', desc: 'Recibes un email con el monto final y el link de pago. Todo dentro de Yala, con pago seguro vía Stripe.' },
+  { icon: 'CreditCard', title: 'Si ganas, tienes 48 horas para pagar', desc: 'Recibes un email con el monto final y el link de pago. Todo dentro de Yala, con pago seguro vía Mercado Pago.' },
 ];
 
 const CUSTODY_STEPS = [
-  { icon: 'CreditCard', title: 'Ganas y pagas', desc: 'Completas el pago dentro de Yala vía Stripe. El dinero todavía no le llega al vendedor.' },
+  { icon: 'CreditCard', title: 'Ganas y pagas', desc: 'Completas el pago dentro de Yala vía Mercado Pago. El dinero todavía no le llega al vendedor.' },
   { icon: 'Shield', title: 'Yala retiene el pago', desc: 'Tu dinero queda en custodia en Yala durante todo el envío (entre 7 y 15 días).' },
   { icon: 'Truck', title: 'Recibes tu coleccionable', desc: 'Cuando llega el producto a tus manos, confirmas la recepción en la plataforma.' },
   { icon: 'Wallet', title: 'Recién ahí el vendedor cobra', desc: 'Yala libera el pago al vendedor: recibe el 92% del precio final (Yala retiene 8% de comisión).' },
