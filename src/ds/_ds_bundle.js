@@ -2236,7 +2236,7 @@ try { (() => {
       className: "ysh__logo",
       onClick: () => onNav && onNav('home')
     }, /*#__PURE__*/React.createElement("img", {
-      src: "assets/yala-logo.svg",
+      src: "assets/yala-logo.png",
       alt: "Yala"
     })), /*#__PURE__*/React.createElement("label", {
       className: "ysh__search"

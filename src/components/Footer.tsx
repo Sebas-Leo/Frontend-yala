@@ -71,7 +71,7 @@ export default function Footer() {
     <footer className="yf">
       <div className="yf__in">
         <div className="yf__brand">
-          <div className="yf__logo"><img src="/assets/yala-logo.svg" alt="Yala" /></div>
+          <div className="yf__logo"><img src="/assets/yala-logo.png" alt="Yala" /></div>
           <p className="yf__tag">
             El marketplace de subastas de coleccionables geek en LatAm. Pokémon TCG, Funko Pop, comics y más,
             con vendedores verificados y precios en soles.

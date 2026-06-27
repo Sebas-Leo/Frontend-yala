@@ -63,7 +63,7 @@ export default function Auth({ onAuth }: AuthProps) {
   return (
     <div className="au">
       <div className="au__brand">
-        <img src="/assets/yala-logo.svg" alt="Yala" />
+        <img src="/assets/yala-logo.png" alt="Yala" />
         <div className="au__sub">Subastas de coleccionables geek.</div>
       </div>
       <div className="au__card">

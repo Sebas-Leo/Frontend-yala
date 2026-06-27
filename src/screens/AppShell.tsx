@@ -102,7 +102,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
     <div className="ysh">
       <div className="ysh__bar">
         <div className="ysh__logo" onClick={() => onNav && onNav('home')}>
-          <img src="/assets/yala-logo.svg" alt="Yala" />
+          <img src="/assets/yala-logo.png" alt="Yala" />
         </div>
         <label className="ysh__search">
           <Icon.Search size={18} />
