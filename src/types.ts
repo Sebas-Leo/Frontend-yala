@@ -37,3 +37,25 @@ export interface Tokens {
   accessToken?: string;
   refreshToken?: string;
 }
+
+// --- Realtime DTOs (STOMP broadcasts) -------------------------------------
+// Field names mirror the backend records EXACTLY — do not rename. The legacy
+// JS client used `bidCount`/`winnerName`, which the backend never sends.
+
+// Nested detail of the most recent bid (com.yala.dto.auction.LatestBidInfo).
+export interface LatestBidInfo {
+  user: string;
+  amount: number;
+  placedAt: string; // ISO LocalDateTime, e.g. "2026-05-19T14:32:00"
+}
+
+// Broadcast on /topic/auction/{id} on every new bid and when the auction ends
+// (com.yala.dto.auction.AuctionUpdateMessage).
+export interface AuctionUpdateMessage {
+  auctionId: number;
+  currentPrice: number;
+  totalBids: number;
+  status: 'ACTIVE' | 'FINISHED' | 'CANCELLED';
+  latestBid: LatestBidInfo | null;
+  winnerUsername: string | null; // present only when status === 'FINISHED'
+}

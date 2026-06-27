@@ -7,10 +7,13 @@ import {
 import { getListing } from '../api/listings';
 import { getAuction } from '../api/auctions';
 import { listBids, placeBid as placeBidApi } from '../api/bids';
+import { subscribeAuction } from '../api/realtime';
 import { listingFromDto, bidFromDto } from '../api/adapters';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { haptics } from '../utils/haptics';
+import type { AuctionUpdateMessage } from '../types';
 
 const css = `
 .yal{max-width:1180px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1.15fr 1fr;gap:32px;align-items:start;}
@@ -91,8 +94,12 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
   const auction = auctionQ.data?.auction || null;
   const bidsPage = auctionQ.data?.bids || null;
 
-  const current = Number(auction?.currentPrice ?? listing?.auction?.currentPrice ?? 0);
-  const status = auction?.status || listing?.auction?.status || 'ACTIVE';
+  // Live overlay applied from STOMP `/topic/auction/{id}` messages — gives an
+  // instant price/status update ahead of the refetched detail.
+  const [live, setLive] = React.useState<AuctionUpdateMessage | null>(null);
+
+  const current = Number(live?.currentPrice ?? auction?.currentPrice ?? listing?.auction?.currentPrice ?? 0);
+  const status = live?.status || auction?.status || listing?.auction?.status || 'ACTIVE';
   const isActive = status === 'ACTIVE';
   const inc = increment(current);
 
@@ -102,7 +109,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
     if (rows[0]) rows[0].leader = true;
     return rows;
   }, [bidsPage]);
-  const totalBids = auction?.totalBids ?? history.length;
+  const totalBids = live?.totalBids ?? auction?.totalBids ?? history.length;
 
   const [activeImg, setActiveImg] = React.useState(0);
   const [bid, setBid] = React.useState(0);
@@ -125,13 +132,51 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
     return undefined;
   }, [current, inc]);
 
-  // Poll for live updates while the auction is active.
+  // Safety-net polling: STOMP (`subscribeAuction`) is the primary live channel;
+  // this slow poll only covers the case where the socket never connects.
   React.useEffect(() => {
     if (!auctionId || !isActive) return undefined;
-    const t = setInterval(() => auctionQ.refetch(), 8000);
+    const t = setInterval(() => auctionQ.refetch(), 20000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auctionId, isActive]);
+
+  // Stable handles so the subscription effect can depend only on auctionId
+  // (no re-subscribe churn on every render).
+  const userRef = React.useRef(user);
+  userRef.current = user;
+  const refetchRef = React.useRef(auctionQ.refetch);
+  refetchRef.current = auctionQ.refetch;
+  // The amount of my most recent bid — used to detect when I've been outbid.
+  const myLastBid = React.useRef(0);
+
+  // Live channel: subscribe to the auction topic and apply each
+  // AuctionUpdateMessage. Field names mirror the backend record exactly
+  // (currentPrice, totalBids, status, latestBid, winnerUsername).
+  React.useEffect(() => {
+    if (!auctionId) return undefined;
+    setLive(null);
+    const unsub = subscribeAuction<AuctionUpdateMessage>(auctionId, (payload) => {
+      if (!payload) return;
+      setLive(payload);
+      const price = Number(payload.currentPrice ?? 0);
+      // Outbid: my last bid was surpassed. Buzz once, then disarm.
+      if (myLastBid.current > 0 && price > myLastBid.current) {
+        haptics.outbid();
+        myLastBid.current = 0;
+      }
+      // Won: the auction closed and I'm the named winner. `winnerUsername` is
+      // built from User.getName() on the backend, so it matches `user.name`.
+      const me = userRef.current;
+      if (payload.status === 'FINISHED' && payload.winnerUsername && me && payload.winnerUsername === me.name) {
+        haptics.won();
+      }
+      // Pull fresh detail + history so the bid list reflects the new state.
+      if (refetchRef.current) refetchRef.current();
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auctionId]);
 
   const onPlaceClick = () => {
     if (!isAuthenticated) {
@@ -148,12 +193,21 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
     setSubmitting(true);
     try {
       await placeBidApi({ auctionId, amount: bid });
+      myLastBid.current = bid; // remember it to detect a later outbid
+      haptics.bidPlaced();
       setShowConfirm(false);
       toast.success('¡Puja registrada!', `Vas liderando con S/. ${bid.toLocaleString('es-PE')}.`, 'Gavel');
       auctionQ.refetch();
     } catch (err) {
       setShowConfirm(false);
-      toast.error('No se pudo pujar', err.message || 'Intenta nuevamente.');
+      // 409 = optimistic-lock conflict: someone bid at the same instant and the
+      // price moved. Refresh and tell the user the real new price.
+      if (err && err.status === 409) {
+        toast.error('Te ganaron de mano', 'Otra persona pujó al mismo tiempo y el precio subió. Mira el nuevo valor e intenta de nuevo.');
+        auctionQ.refetch();
+      } else {
+        toast.error('No se pudo pujar', err.message || 'Intenta nuevamente.');
+      }
     } finally {
       setSubmitting(false);
     }

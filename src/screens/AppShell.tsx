@@ -3,6 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IconButton, Avatar, Icon } from '../ds';
 import { listCategories } from '../api/categories';
 import { getUnreadCount } from '../api/notifications';
+import { subscribeNotifications } from '../api/realtime';
+import { notificationFromDto } from '../api/adapters';
+import { useAuth } from '../auth/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { useFetch } from '../hooks/useFetch';
 import { useDebounce } from '../hooks/useDebounce';
 
@@ -45,6 +49,8 @@ interface AppShellProps { user?: any; onNav?: (d: any) => void; onCat?: () => vo
 export default function AppShell({ onNav, onLogout, user = null }: AppShellProps) {
   ensure();
   const navigate = useNavigate();
+  const auth = useAuth();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get('category') || null;
 
@@ -60,6 +66,24 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Real-time notifications: STOMP (`/topic/notifications/{userId}`) pushes the
+  // badge live and pops a toast the instant something happens, instead of
+  // waiting up to 30s for the poll above (which stays as a safety net). The
+  // shell `user` prop carries no id, so the real id comes from the auth context.
+  const userId = auth.user?.id;
+  const refetchUnreadRef = React.useRef(unreadQ.refetch);
+  refetchUnreadRef.current = unreadQ.refetch;
+  React.useEffect(() => {
+    if (!userId) return undefined;
+    const unsub = subscribeNotifications(userId, (dto) => {
+      const n = notificationFromDto(dto);
+      if (n) toast.show({ tone: n.tone, title: n.title, message: n.msg, icon: n.icon });
+      if (refetchUnreadRef.current) refetchUnreadRef.current();
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // Debounced search -> navigate Home with ?q=.
   const [term, setTerm] = React.useState(searchParams.get('q') || '');

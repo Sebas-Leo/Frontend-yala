@@ -12,6 +12,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // sockjs-client references the Node global `global`, which does not exist in
+    // the browser. Map it to `globalThis` so the realtime client bundles cleanly.
+    define: { global: 'globalThis' },
     server: {
       port: 5173,
       open: false,
