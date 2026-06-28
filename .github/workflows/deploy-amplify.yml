@@ -12,6 +12,7 @@ name: Deploy frontend to AWS Amplify
 #   - Variable VITE_API_BASE_URL   : prod API base (optional, defaults below)
 #   - Variable VITE_LIVEKIT_URL    : LiveKit SFU wss:// URL (optional, defaults below)
 #   - Variable VITE_WS_URL         : STOMP/SockJS URL (optional, defaults below)
+#   - Variable CLOUDFRONT_DISTRIBUTION_ID : CF distro frente a Amplify (optional, default below)
 on:
   push:
     branches:
@@ -71,3 +72,8 @@ jobs:
 
       - name: Start Amplify deployment
         run: aws amplify start-deployment --app-id "${{ vars.AMPLIFY_APP_ID }}" --branch-name main --job-id "${{ steps.dep.outputs.jobId }}"
+
+      # yala.dpdns.org sirve la web vía CloudFront (origin = Amplify); sin invalidar,
+      # la caché seguiría sirviendo el index.html viejo tras cada deploy.
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID || 'E1OOZT4DUY0GEM' }}" --paths "/*"
