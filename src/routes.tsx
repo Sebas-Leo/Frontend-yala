@@ -22,6 +22,7 @@ const CreateListing = React.lazy(() => import('./screens/CreateListing'));
 const CreateAuction = React.lazy(() => import('./screens/CreateAuction'));
 const Review = React.lazy(() => import('./screens/Review'));
 const DniVerify = React.lazy(() => import('./screens/DniVerify'));
+const VerifyDone = React.lazy(() => import('./screens/VerifyDone'));
 const Admin = React.lazy(() => import('./screens/Admin'));
 
 function NotFound() {
@@ -191,6 +192,8 @@ export function buildRoutes(ctx: any): RouteDef[] {
         />
       ),
     },
+    // Callback de retorno del KYC de Didit (didit.callback-url → /verify/done).
+    { path: '/verify/done', protect: true, element: <VerifyDone /> },
     { path: '/admin', protect: true, roles: ADMIN_ONLY, element: <Admin onAction={(m) => toast.success('Listo', m)} /> },
 
     { path: '*', element: <NotFound /> },

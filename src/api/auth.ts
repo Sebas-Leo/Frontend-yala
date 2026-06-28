@@ -8,7 +8,7 @@
 // Sellers are not created here: a registered user applies via /seller/application.
 
 import { api } from './client';
-import { setTokens, clearTokens, getAccessToken } from './tokens';
+import { setTokens, clearTokens, getAccessToken, getRefreshToken } from './tokens';
 
 // ResponseAuthDTO -> minimal session user (full profile comes from getCurrentUser)
 function fromAuthDto(dto: any) {
@@ -28,6 +28,17 @@ export async function register(payload: {
   const dto = await api.post('/auth/register', payload, { auth: false });
   setTokens(dto);
   return fromAuthDto(dto);
+}
+
+// Force a token refresh so the access token carries the user's CURRENT role.
+// The backend re-reads the role from the DB on refresh, so after a seller is
+// promoted (Didit KYC) this swaps the stale USER token for a SELLER one.
+export async function refreshSession() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  const dto = await api.post('/auth/refresh-token', { refreshToken }, { auth: false });
+  setTokens({ accessToken: dto.accessToken, refreshToken: dto.refreshToken });
+  return true;
 }
 
 // Full session profile: ResponseUserDTO { id, name, email, avatarUrl, reputation, isVerifiedSeller, role }

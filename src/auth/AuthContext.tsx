@@ -64,18 +64,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Force a new access token (with the current DB role) + re-fetch the profile.
+  // Used after the Didit KYC promotes the user to SELLER: the in-session token
+  // still says USER, so we must refresh it before SELLER-only calls succeed.
+  const refreshSession = React.useCallback(async () => {
+    try {
+      await authApi.refreshSession();
+    } catch {
+      /* keep the existing token if refresh fails */
+    }
+    const profile = await authApi.getCurrentUser();
+    setUser(profile);
+    if (profile?.isIdentityVerified) setIdentityVerified(true);
+    return profile;
+  }, [setIdentityVerified]);
+
   // Subscribe to the per-user identity topic so the UI updates immediately
-  // when the backend confirms a DNI check, without requiring a page reload.
+  // when the backend confirms a DNI check or promotes the user to seller,
+  // without requiring a page reload.
   React.useEffect(() => {
     if (!user) return undefined;
     return subscribeIdentity(user.id, (msg: any) => {
-      if (msg?.verified) {
-        setIdentityVerified(true);
-        // Re-fetch profile so user.isIdentityVerified is in sync with the backend.
-        authApi.getCurrentUser().then((profile) => setUser(profile)).catch(() => {});
+      if (msg?.verified) setIdentityVerified(true);
+      if (msg?.verified || msg?.seller) {
+        // Refresh token + profile so a same-session promotion takes effect
+        // (the stale token would still authorize as USER otherwise).
+        refreshSession().catch(() => {});
       }
     });
-  }, [user?.id, setIdentityVerified]);
+  }, [user?.id, setIdentityVerified, refreshSession]);
 
   const login = React.useCallback(async (credentials: any) => {
     await authApi.login(credentials);
@@ -111,8 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       logout,
+      refreshSession,
     }),
-    [user, loading, identityVerified, setIdentityVerified, login, register, logout],
+    [user, loading, identityVerified, setIdentityVerified, login, register, logout, refreshSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
