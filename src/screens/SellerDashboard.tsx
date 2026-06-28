@@ -2,9 +2,17 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, Button, AuctionCard, ListingCard, CardSkeleton, EmptyState, Icon } from '../ds';
 import { getUserListings } from '../api/users';
+import { listMySales } from '../api/orders';
+import { subscribeNotifications } from '../api/realtime';
 import { auctionCardFrom, listingCardFrom } from '../api/adapters';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../auth/AuthContext';
+
+const SALE_STATUS: Record<string, { label: string }> = {
+  PENDING: { label: 'Pendiente de pago' },
+  CONFIRMED: { label: 'Pagada' },
+  CANCELLED: { label: 'Cancelada' },
+};
 
 const MAX_LISTINGS = 20;
 const COMMISSION_RATE = 0.08; // Yala fee — client-side estimate (no endpoint).
@@ -26,6 +34,14 @@ const css = `
 .yd__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
 .yd__addcard{border:1.5px dashed var(--border-default);border-radius:var(--radius-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-muted);cursor:pointer;min-height:300px;transition:all var(--dur-fast);}
 .yd__addcard:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-subtle);}
+.yd__sales{width:100%;border-collapse:collapse;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;}
+.yd__sales th,.yd__sales td{text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border-subtle);color:var(--text-body);}
+.yd__sales th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-subtle);background:var(--surface-sunken);}
+.yd__sales tr:last-child td{border-bottom:none;}
+.yd__badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;}
+.yd__badge--PENDING{background:var(--live-subtle);color:var(--live-hover);}
+.yd__badge--CONFIRMED{background:var(--success-bg);color:var(--success);}
+.yd__badge--CANCELLED{background:var(--surface-sunken);color:var(--text-muted);}
 @media(max-width:1080px){.yd__metrics{grid-template-columns:repeat(2,1fr)}.yd__grid{grid-template-columns:repeat(3,1fr)}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
@@ -55,6 +71,22 @@ export default function SellerDashboard({ onNew, onGoLive, onOpenAuction }: Sell
     [user?.id],
     { enabled: !!user?.id },
   );
+
+  // Sales (incl. live-auction winners) + their payment status.
+  const salesQ = useFetch(
+    (signal) => listMySales({ page: 0, size: 50, signal }),
+    [user?.id],
+    { enabled: !!user?.id },
+  );
+  const sales = salesQ.data?.content || [];
+
+  // Refresh the sales list in real time when a sale/notification arrives.
+  const refetchSalesRef = React.useRef(salesQ.refetch);
+  refetchSalesRef.current = salesQ.refetch;
+  React.useEffect(() => {
+    if (!user?.id) return undefined;
+    return subscribeNotifications(user.id, () => refetchSalesRef.current && refetchSalesRef.current());
+  }, [user?.id]);
 
   const all = listingsQ.data?.content || [];
   const total = listingsQ.data?.totalElements ?? all.length;
@@ -97,10 +129,38 @@ export default function SellerDashboard({ onNew, onGoLive, onOpenAuction }: Sell
         <Tabs value={tab} onChange={setTab} tabs={[
           { value: 'auctions', label: 'Mis subastas', count: auctionsList.length },
           { value: 'all', label: 'Todas mis publicaciones', count: total },
+          { value: 'sales', label: 'Ventas / Ganadores', count: salesQ.data?.totalElements ?? sales.length },
         ]} />
       </div>
 
-      {listingsQ.loading ? (
+      {tab === 'sales' ? (
+        salesQ.loading ? (
+          <div className="yd__grid">{Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}</div>
+        ) : salesQ.error ? (
+          <EmptyState icon={<Icon.AlertTriangle size={26} />} title="No pudimos cargar tus ventas"
+            description={salesQ.error.message} actions={<Button variant="secondary" onClick={salesQ.refetch}>Reintentar</Button>} />
+        ) : sales.length === 0 ? (
+          <EmptyState icon={<Icon.Gavel size={24} />} title="Aún no tienes ventas"
+            description="Cuando alguien gane una de tus subastas en vivo o compre un producto, aparecerá aquí con su estado de pago." />
+        ) : (
+          <table className="yd__sales">
+            <thead>
+              <tr><th>Comprador</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Límite de pago</th></tr>
+            </thead>
+            <tbody>
+              {sales.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.buyer?.name || '—'}</td>
+                  <td>{o.itemTitle || '—'}</td>
+                  <td style={{ fontFamily: 'var(--font-mono)' }}>{money(Number(o.amount || 0))}</td>
+                  <td><span className={`yd__badge yd__badge--${o.status}`}>{(SALE_STATUS[o.status]?.label) || o.status}</span></td>
+                  <td>{o.paymentDeadline ? new Date(o.paymentDeadline).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      ) : listingsQ.loading ? (
         <div className="yd__grid">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>
       ) : listingsQ.error ? (
         <EmptyState icon={<Icon.AlertTriangle size={26} />} title="No pudimos cargar tus publicaciones"

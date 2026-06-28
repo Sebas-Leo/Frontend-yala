@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import '@livekit/components-styles';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks } from '@livekit/components-react';
 import { Track } from 'livekit-client';
@@ -69,7 +69,8 @@ interface Props {
 export default function LiveView({ verified, onRequireDni, onBack }: Props) {
   ensure();
   const { id } = useParams();
-  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const toast = useToast();
 
   const { data: detail } = useFetch<LiveDetail>((signal) => getLive(id!, { signal }), [id]);
@@ -206,6 +207,10 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
                 )}
                 {auction.status === 'SOLD' && auction.winnerName && (
                   <div className="ylv__arow"><span>Ganador</span><b>{auction.winnerName}</b></div>
+                )}
+                {auction.status === 'SOLD' && user?.name && auction.winnerName === user.name && (
+                  <Button variant="primary" size="md" fullWidth onClick={() => navigate('/orders')}
+                    iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}>¡Ganaste! Pagar ahora</Button>
                 )}
               </>
             ) : (

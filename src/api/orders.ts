@@ -23,6 +23,13 @@ export function listMyOrders({ page = 0, size = 10, sort, signal }: PageQuery = 
   return api.get('/orders/my-orders', { params, signal });
 }
 
+// Seller's sales (incl. live-auction winners): GET /orders/my-sales (SELLER/ADMIN).
+export function listMySales({ page = 0, size = 20, sort, signal }: PageQuery = {}) {
+  const params: any = { page, size };
+  if (sort) params.sort = sort;
+  return api.get('/orders/my-sales', { params, signal });
+}
+
 export function confirmOrder(id: number | string) {
   return api.put(`/orders/${id}/confirm`);
 }
