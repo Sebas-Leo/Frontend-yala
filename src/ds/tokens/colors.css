@@ -1,6 +1,6 @@
 /* ============================================================
    Yala — Color tokens
-   Primary  : deep violet/indigo (premium, geek)
+   Primary  : azul Yala (migrado de violeta; #0E28D6)
    Accent   : warm coral/amber — RESERVED for live-auction
               urgency only (countdown, "pujar", "quedan X min")
    Neutrals : cool grays for structure
@@ -8,18 +8,18 @@
    ============================================================ */
 
 :root {
-  /* ---- Brand: violet / indigo ---- */
-  --violet-50:  #F3F1FE;
-  --violet-100: #E7E2FD;
-  --violet-200: #CFC4FB;
-  --violet-300: #B09BF7;
-  --violet-400: #8F6CF0;
-  --violet-500: #7445E6;
-  --violet-600: #5E2BD6;   /* primary */
-  --violet-700: #4D20B5;
-  --violet-800: #3F1C90;
-  --violet-900: #341A72;
-  --violet-950: #1F0E47;
+  /* ---- Brand: azul Yala (los nombres siguen siendo --violet-* por compatibilidad) ---- */
+  --violet-50:  #ECF0FF;
+  --violet-100: #D9E0FF;
+  --violet-200: #B3C1FF;
+  --violet-300: #8098FF;
+  --violet-400: #4D6BFF;
+  --violet-500: #2447F0;
+  --violet-600: #0E28D6;   /* primary (azul Yala) */
+  --violet-700: #0B20AD;
+  --violet-800: #0A1A8A;
+  --violet-900: #0C1A6E;
+  --violet-950: #070F3F;
 
   /* ---- Accent: live / urgency (coral-amber) ---- */
   --live-50:  #FFF4ED;
@@ -121,7 +121,7 @@
   --price-live:       var(--live-700);
 
   /* Focus ring */
-  --focus-ring:       rgba(94, 43, 214, 0.35);
+  --focus-ring:       rgba(14, 40, 214, 0.35);
   --focus-ring-live:  rgba(251, 101, 20, 0.35);
 
   /* Semantic text/bg pairs */
@@ -148,9 +148,9 @@
   --brand:            var(--violet-400);
   --brand-hover:      var(--violet-300);
   --brand-active:     var(--violet-200);
-  --brand-subtle:     rgba(143, 108, 240, 0.14);
-  --brand-subtle-2:   rgba(143, 108, 240, 0.22);
-  --brand-border:     rgba(143, 108, 240, 0.35);
+  --brand-subtle:     rgba(77, 107, 255, 0.14);
+  --brand-subtle-2:   rgba(77, 107, 255, 0.22);
+  --brand-border:     rgba(77, 107, 255, 0.35);
   --on-brand:         var(--gray-950);
 
   --live:             var(--live-400);
@@ -183,7 +183,7 @@
   --price:            #F4F4F8;
   --price-live:       var(--live-300);
 
-  --focus-ring:       rgba(143, 108, 240, 0.45);
+  --focus-ring:       rgba(77, 107, 255, 0.45);
   --focus-ring-live:  rgba(255, 138, 76, 0.45);
 
   --success:          #3DDC97;
