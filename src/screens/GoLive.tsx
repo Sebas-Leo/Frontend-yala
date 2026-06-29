@@ -205,12 +205,16 @@ export default function GoLive({ onBack }: Props) {
                 </>
               ) : (
                 <>
-                  <Input placeholder="Título del producto" value={faTitle} onChange={(e: any) => setFaTitle(e.target.value)} />
+                  <Input label="Producto" placeholder="Título del producto" value={faTitle} onChange={(e: any) => setFaTitle(e.target.value)} />
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <Input prefix="S/." mono placeholder="Precio base" value={faBase}
-                      onChange={(e: any) => setFaBase(e.target.value.replace(/[^\d.]/g, ''))} style={{ flex: 1 }} />
-                    <Input prefix="S/." mono placeholder="Incremento" value={faIncrement}
-                      onChange={(e: any) => setFaIncrement(e.target.value.replace(/[^\d.]/g, ''))} style={{ flex: 1 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Input label="Precio base" hint="Puja inicial de la subasta" prefix="S/." mono placeholder="0" value={faBase}
+                        onChange={(e: any) => setFaBase(e.target.value.replace(/[^\d.]/g, ''))} style={{ width: '100%' }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Input label="Incremento" hint="Cuánto sube cada puja" prefix="S/." mono placeholder="1" value={faIncrement}
+                        onChange={(e: any) => setFaIncrement(e.target.value.replace(/[^\d.]/g, ''))} style={{ width: '100%' }} />
+                    </div>
                   </div>
                   <Button onClick={createAuction} iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}>
                     Lanzar subasta flash
