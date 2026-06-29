@@ -39,7 +39,6 @@ function validate(v: any) {
   if (!v.title || v.title.trim().length < 10) e.title = 'Mínimo 10 caracteres.';
   if (!v.categoryId) e.categoryId = 'Elige una categoría.';
   if (!v.condition) e.condition = 'Elige la condición.';
-  if (v.mode === 'FIXED' && (!v.fixedPrice || Number(v.fixedPrice) <= 0)) e.fixedPrice = 'Ingresa un precio válido.';
   return e;
 }
 
@@ -113,7 +112,7 @@ export default function CreateListing({ onBack }: CreateListingProps) {
   return (
     <div className="cl">
       <div className="cl__back" onClick={onBack}><Icon.ChevronLeft size={16} /> Panel del vendedor</div>
-      <div className="cl__h1">Nueva publicación{isAuction ? ' · Paso 1 de 2' : ''}</div>
+      <div className="cl__h1">Nueva publicación · Paso 1 de 2</div>
       <div className="cl__sub">Mostrá tu coleccionable con buenas fotos y una descripción clara.</div>
 
       <form className="cl__card" onSubmit={(e) => { e.preventDefault(); submit(); }}>
@@ -127,16 +126,9 @@ export default function CreateListing({ onBack }: CreateListingProps) {
         <div>
           <div className="cl__lbl">Modo de venta</div>
           <div className="cl__radios">
-            <div className={`cl__radio${isAuction ? ' cl__radio--on' : ''}`} onClick={() => form.setValue('mode', 'AUCTION')}>Subasta</div>
-            <div className={`cl__radio${!isAuction ? ' cl__radio--on' : ''}`} onClick={() => form.setValue('mode', 'FIXED')}>Precio fijo</div>
+            <div className="cl__radio cl__radio--on">Subasta</div>
           </div>
         </div>
-
-        {!isAuction && (
-          <Input label="Precio fijo (S/.)" prefix="S/." mono placeholder="0.00"
-            value={form.values.fixedPrice} onChange={(e) => form.setValue('fixedPrice', e.target.value.replace(/[^\d.]/g, ''))}
-            error={form.errors.fixedPrice} required />
-        )}
 
         <div className="cl__row">
           <div style={{ flex: 1, minWidth: 0 }}>
