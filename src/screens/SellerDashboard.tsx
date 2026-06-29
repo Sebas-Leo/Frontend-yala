@@ -42,7 +42,11 @@ const css = `
 .yd__badge--PENDING{background:var(--live-subtle);color:var(--live-hover);}
 .yd__badge--CONFIRMED{background:var(--success-bg);color:var(--success);}
 .yd__badge--CANCELLED{background:var(--surface-sunken);color:var(--text-muted);}
+.yd__saleswrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.yd__sales{min-width:540px;}
 @media(max-width:1080px){.yd__metrics{grid-template-columns:repeat(2,1fr)}.yd__grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.yd{padding:16px}.yd__head{flex-direction:column;align-items:flex-start}.yd__grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.yd__metrics{grid-template-columns:1fr}.yd__grid{grid-template-columns:1fr}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
@@ -144,7 +148,7 @@ export default function SellerDashboard({ onNew, onGoLive, onOpenAuction }: Sell
           <EmptyState icon={<Icon.Gavel size={24} />} title="Aún no tienes ventas"
             description="Cuando alguien gane una de tus subastas en vivo o compre un producto, aparecerá aquí con su estado de pago." />
         ) : (
-          <table className="yd__sales">
+          <div className="yd__saleswrap"><table className="yd__sales">
             <thead>
               <tr><th>Comprador</th><th>Producto</th><th>Monto</th><th>Estado</th><th>Límite de pago</th></tr>
             </thead>
@@ -159,7 +163,7 @@ export default function SellerDashboard({ onNew, onGoLive, onOpenAuction }: Sell
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )
       ) : listingsQ.loading ? (
         <div className="yd__grid">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>

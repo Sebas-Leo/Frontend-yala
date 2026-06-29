@@ -35,6 +35,7 @@ const css = `
 .yc__stripe{display:flex;align-items:center;gap:8px;border:1px solid var(--border-default);border-radius:var(--radius-md);padding:13px 14px;font-size:13px;color:var(--text-muted);}
 .yc__note{font-size:12px;color:var(--text-subtle);text-align:center;display:flex;align-items:center;gap:6px;justify-content:center;}
 @media(max-width:880px){.yc__grid{grid-template-columns:1fr}}
+@media(max-width:560px){.yc{padding:16px}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

@@ -30,6 +30,8 @@ const css = `
 .yh__foot{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:28px;}
 .yh__range{font-size:12px;color:var(--text-subtle);font-family:var(--font-mono);}
 @media(max-width:1080px){.yh{grid-template-columns:1fr}.yh__side{position:static;flex-direction:row;flex-wrap:wrap}.yh__grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.yh{padding:16px}.yh__grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.yh__grid{grid-template-columns:1fr}}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }

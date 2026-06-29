@@ -41,6 +41,8 @@ const css = `
 .ld__tags{display:flex;flex-wrap:wrap;gap:7px;}
 .ld__empty{max-width:1180px;margin:0 auto;padding:48px 24px;}
 @media(max-width:960px){.ld__grid{grid-template-columns:1fr}}
+@media(max-width:760px){.ld{padding:16px}}
+@media(max-width:480px){.ld__thumbs{grid-template-columns:repeat(2,1fr)}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

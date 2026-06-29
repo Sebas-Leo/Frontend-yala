@@ -10,6 +10,7 @@ const css = `
 @keyframes vdspin{to{transform:rotate(360deg)}}
 .vd__h1{font-size:22px;font-weight:800;color:var(--text-strong);letter-spacing:-.02em;}
 .vd__sub{font-size:14px;color:var(--text-muted);margin:8px 0 22px;line-height:1.5;}
+@media(max-width:420px){.vd{padding:36px 18px;}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

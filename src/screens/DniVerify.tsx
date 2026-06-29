@@ -20,6 +20,7 @@ const css = `
 .dv__alert{display:flex;gap:8px;align-items:flex-start;font-size:13px;border-radius:var(--radius-md);padding:10px 12px;line-height:1.45;margin-bottom:4px;}
 .dv__alert--err{color:var(--danger,#d92d20);background:var(--danger-subtle,#fef3f2);border:1px solid var(--danger,#d92d20);}
 .dv__alert--ok{color:var(--success,#067647);background:var(--success-subtle,#ecfdf3);border:1px solid var(--success,#067647);}
+@media(max-width:420px){.dv{padding:24px 16px;}.dv__row{flex-direction:column;}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

@@ -23,6 +23,7 @@ const css = `
 .yo__right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none;min-width:160px;}
 .yo__act{display:flex;gap:8px;align-items:center;}
 .yo__foot{display:flex;justify-content:center;margin-top:22px;}
+@media(max-width:600px){.yo{padding:16px;}.yo__card{flex-direction:column;align-items:stretch;}.yo__right{min-width:0;width:auto;align-items:flex-start;}.yo__title{white-space:normal;}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

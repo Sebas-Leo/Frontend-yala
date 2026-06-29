@@ -33,6 +33,21 @@ const shellCSS = `
 .ysh__cat{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:all var(--dur-fast);border:1px solid transparent;}
 .ysh__cat:hover{background:var(--surface-sunken);color:var(--text-strong);}
 .ysh__cat--active{background:var(--brand-subtle);color:var(--brand);}
+.ysh__burger{display:none;align-items:center;justify-content:center;width:42px;height:42px;border-radius:var(--radius-md);background:var(--surface-sunken);border:1px solid var(--border-subtle);color:var(--text-strong);cursor:pointer;flex:none;}
+@media(max-width:720px){
+  .ysh__bar{gap:10px;padding:0 14px;}
+  .ysh__search{min-width:0;}
+  .ysh__burger{display:inline-flex;}
+  .ysh__actions{position:absolute;top:64px;right:10px;flex-direction:column;align-items:stretch;gap:8px;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);box-shadow:0 10px 30px rgba(0,0,0,.18);padding:10px;min-width:212px;display:none;z-index:60;}
+  .ysh__actions--open{display:flex;}
+  .ysh__sell,.ysh__login,.ysh__register{width:100%;justify-content:center;}
+  .ysh__user{justify-content:flex-start;}
+  .ysh__nav{padding:0 12px;}
+}
+@media(max-width:400px){
+  .ysh__bar{padding:0 10px;}
+  .ysh__logo img{height:34px;}
+}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = shellCSS; document.head.appendChild(s); } }
@@ -55,6 +70,8 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const activeCat = searchParams.get('category') || null;
+
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   const catsQ = useFetch((signal) => listCategories({ signal }), []);
   const categories = catsQ.data || [];
@@ -115,7 +132,10 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
             onKeyDown={(e) => { if (e.key === 'Enter') navigate(term ? `/?q=${encodeURIComponent(term)}` : '/'); }}
           />
         </label>
-        <div className="ysh__actions">
+        <button className="ysh__burger" aria-label="Menú" onClick={() => setMenuOpen((o) => !o)}>
+          {Icon.Menu ? <Icon.Menu size={22} /> : '≡'}
+        </button>
+        <div className={`ysh__actions${menuOpen ? ' ysh__actions--open' : ''}`} onClick={() => setMenuOpen(false)}>
           {user ? (
             <>
               <button className="ysh__sell" onClick={() => navigate(user.verified ? '/seller' : '/seller/apply')}>

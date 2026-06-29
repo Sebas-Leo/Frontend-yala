@@ -29,6 +29,7 @@ const css = `
 .ygl__msg b{color:var(--text-strong);font-weight:700;margin-right:5px;}
 .ygl__chatform{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border-subtle);}
 @media(max-width:900px){.ygl__grid{grid-template-columns:1fr;}}
+@media(max-width:600px){.ygl{padding:14px;}.ygl__chat{height:auto;max-height:50vh;}.ygl__setup{margin:16px auto;padding:20px;}}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }

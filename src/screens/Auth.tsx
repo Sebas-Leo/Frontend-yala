@@ -15,6 +15,7 @@ const css = `
 .au__foot{font-size:13px;color:var(--text-muted);text-align:center;margin-top:18px;}
 .au__link{color:var(--text-link);font-weight:600;cursor:pointer;}
 .au__err{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--danger,#d92d20);background:var(--danger-subtle,#fef3f2);border:1px solid var(--danger,#d92d20);border-radius:var(--radius-md);padding:10px 12px;}
+@media(max-width:420px){.au{padding:24px 16px;}.au__row{flex-direction:column;gap:14px;}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

@@ -56,6 +56,8 @@ const css = `
 .yal__tick{animation:yala-tick 1.2s var(--ease-out);}
 .yal__empty{max-width:1180px;margin:0 auto;padding:48px 24px;}
 @media(max-width:960px){.yal{grid-template-columns:1fr}}
+@media(max-width:760px){.yal{padding:16px}.yal__thumbs{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.yal__thumbs{grid-template-columns:repeat(2,1fr)}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

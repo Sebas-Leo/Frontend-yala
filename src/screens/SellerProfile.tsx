@@ -37,6 +37,8 @@ const css = `
 .sp__foot{display:flex;justify-content:center;margin-top:22px;}
 @media(max-width:1080px){.sp__grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:680px){.sp__grid{grid-template-columns:repeat(2,1fr)}.sp__head{flex-direction:column;text-align:center}}
+@media(max-width:600px){.sp{padding:16px}.sp__stats{grid-template-columns:1fr}}
+@media(max-width:480px){.sp__grid{grid-template-columns:1fr}}
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 

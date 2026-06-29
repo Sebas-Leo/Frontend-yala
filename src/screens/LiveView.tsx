@@ -37,6 +37,7 @@ const css = `
 .ylv__statetag--sold{background:var(--success-50,#e9f9f0);color:var(--success-700,#1B9E5A);}
 .ylv__statetag--deserted{background:var(--surface-sunken);color:var(--text-muted);}
 @media(max-width:1000px){.ylv{grid-template-columns:1fr;}.ylv__side{position:static;}}
+@media(max-width:600px){.ylv{padding:14px;}.ylv__chat{height:auto;max-height:55vh;}}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }
