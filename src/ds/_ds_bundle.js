@@ -1770,10 +1770,8 @@ const AUCTION_STATUS = {
     tone: 'neutral'
   },
   ACTIVE: {
-    label: 'En vivo',
-    tone: 'live',
-    dot: true,
-    pulse: true
+    label: 'En subasta',
+    tone: 'success'
   },
   CLOSED: {
     label: 'Cerrada',
