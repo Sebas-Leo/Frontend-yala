@@ -101,6 +101,7 @@ export function buildRoutes(ctx: any): RouteDef[] {
       element: <SellerProfile onBack={() => navigate(-1)} onOpenAuction={(id) => navigate('/auction/' + id)} />,
     },
     { path: '/login', element: <Auth onAuth={handleAuth} /> },
+    { path: '/register', element: <Auth onAuth={handleAuth} /> },
 
     { path: '/checkout', protect: true, element: <Checkout onBack={() => navigate('/orders')} /> },
     {

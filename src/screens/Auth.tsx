@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Input, Button, Icon } from '../ds';
 import { useAuth } from '../auth/AuthContext';
 
@@ -24,11 +24,14 @@ interface AuthProps { onAuth?: (profile: any) => void; }
 export default function Auth({ onAuth }: AuthProps) {
   ensure();
   const { login, register } = useAuth();
-  const [searchParams] = useSearchParams();
-  // Permite enlazar directo a la pestaña de registro vía /login?tab=register.
-  const [tab, setTab] = React.useState(searchParams.get('tab') === 'register' ? 'register' : 'login');
+  const location = useLocation();
+  const navigate = useNavigate();
+  // El formulario se elige por la ruta: /register = crear cuenta, /login = ingresar.
+  const mode = location.pathname === '/register' ? 'register' : 'login';
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState(null);
+  // Limpia el error al alternar entre /login y /register.
+  React.useEffect(() => { setError(null); }, [location.pathname]);
 
   // Buyer registration: DNI + names are validated against RENIEC (JSON.pe) in the backend.
   const [email, setEmail] = React.useState('');
@@ -38,8 +41,6 @@ export default function Auth({ onAuth }: AuthProps) {
   const [apellidoPaterno, setApellidoPaterno] = React.useState('');
   const [apellidoMaterno, setApellidoMaterno] = React.useState('');
   const dniValid = /^\d{8}$/.test(dni);
-
-  const switchTab = (v) => { setTab(v); setError(null); };
 
   const run = (action) => async (e) => {
     e.preventDefault();
@@ -73,7 +74,7 @@ export default function Auth({ onAuth }: AuthProps) {
         <div className="au__sub">Subastas de coleccionables geek.</div>
       </div>
       <div className="au__card">
-        {tab === 'login' && (
+        {mode === 'login' && (
           <form className="au__form" onSubmit={doLogin}>
             <div className="au__title">Ingresar</div>
             {errorBanner}
@@ -84,11 +85,11 @@ export default function Auth({ onAuth }: AuthProps) {
             <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy}>
               {busy ? 'Ingresando…' : 'Ingresar'}
             </Button>
-            <div className="au__foot">¿No tienes cuenta? <span className="au__link" onClick={() => switchTab('register')}>Crea una</span></div>
+            <div className="au__foot">¿No tienes cuenta? <span className="au__link" onClick={() => navigate('/register')}>Crea una</span></div>
           </form>
         )}
 
-        {tab === 'register' && (
+        {mode === 'register' && (
           <form className="au__form" onSubmit={doRegister}>
             <div className="au__title">Crear cuenta</div>
             {errorBanner}
@@ -111,7 +112,7 @@ export default function Auth({ onAuth }: AuthProps) {
             <Button variant="primary" size="lg" fullWidth type="submit" disabled={busy || !dniValid}>
               {busy ? 'Creando…' : 'Crear cuenta'}
             </Button>
-            <div className="au__foot">¿Ya tienes cuenta? <span className="au__link" onClick={() => switchTab('login')}>Ingresar</span></div>
+            <div className="au__foot">¿Ya tienes cuenta? <span className="au__link" onClick={() => navigate('/login')}>Ingresar</span></div>
           </form>
         )}
       </div>
