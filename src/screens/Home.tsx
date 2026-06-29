@@ -37,7 +37,7 @@ let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }
 
 // Must match CreateListing.tsx exactly so the condition filter hits stored listings.
-const CONDS = ['PSA 10 (Gem Mint)', 'PSA 9 (Mint)', 'PSA 8 (Near Mint)', 'PSA 7 o menor', 'Sin gradar (Excelente/Bueno)'];
+const CONDS = ['Sellado', 'Como nuevo', 'Con desgaste'];
 const SORTS = [
   { value: 'createdAt,desc', label: 'Más recientes' },
   { value: 'createdAt,asc', label: 'Más antiguas' },

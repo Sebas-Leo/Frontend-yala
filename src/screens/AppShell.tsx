@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { IconButton, Avatar, Icon } from '../ds';
 import { listCategories } from '../api/categories';
 import { getUnreadCount } from '../api/notifications';
@@ -71,6 +71,8 @@ interface AppShellProps { user?: any; onNav?: (d: any) => void; onCat?: () => vo
 export default function AppShell({ onNav, onLogout, user = null }: AppShellProps) {
   ensure();
   const navigate = useNavigate();
+  // Category tabs only make sense on the explore/auctions page.
+  const showCats = useLocation().pathname === '/inicio';
   const auth = useAuth();
   const toast = useToast();
   const [searchParams] = useSearchParams();
@@ -141,7 +143,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
         <div className="ysh__logo" onClick={() => navigate('/')}>
           <img src="/assets/yala-logo.png" alt="Yala" />
         </div>
-        <div className="ysh__nav ysh__nav--inline">{cats}</div>
+        {showCats && <div className="ysh__nav ysh__nav--inline">{cats}</div>}
         <label className="ysh__search">
           <Icon.Search size={18} />
           <input
@@ -183,7 +185,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
           )}
         </div>
       </div>
-      <div className="ysh__nav ysh__nav--row">{cats}</div>
+      {showCats && <div className="ysh__nav ysh__nav--row">{cats}</div>}
     </div>
   );
 }

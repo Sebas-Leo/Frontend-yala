@@ -32,7 +32,7 @@ const css = `
 `;
 let ic = false; function ensure(){ if(!ic){ic=true;const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);} }
 
-const CONDITIONS = ['PSA 10 (Gem Mint)', 'PSA 9 (Mint)', 'PSA 8 (Near Mint)', 'PSA 7 o menor', 'Sin gradar (Excelente/Bueno)'];
+const CONDITIONS = ['Sellado', 'Como nuevo', 'Con desgaste'];
 
 function validate(v: any) {
   const e: any = {};
@@ -76,12 +76,11 @@ export default function CreateListing({ onBack }: CreateListingProps) {
         const body: any = {
           title: v.title.trim(),
           description: v.description.trim(),
-          mode: v.mode,
+          mode: 'AUCTION',
           condition: v.condition,
           categoryId: Number(v.categoryId),
           tags,
         };
-        if (v.mode === 'FIXED') body.fixedPrice = Number(v.fixedPrice);
         const listing = await createListing(body);
 
         // Best-effort image upload (listing already exists if a file fails).
@@ -122,13 +121,6 @@ export default function CreateListing({ onBack }: CreateListingProps) {
         </div>
         <Textarea label="Descripción" rows={4} maxLength={2000} placeholder="Cuenta el estado, procedencia, detalles relevantes…"
           value={form.values.description} onChange={form.handleChange('description')} />
-
-        <div>
-          <div className="cl__lbl">Modo de venta</div>
-          <div className="cl__radios">
-            <div className="cl__radio cl__radio--on">Subasta</div>
-          </div>
-        </div>
 
         <div className="cl__row">
           <div style={{ flex: 1, minWidth: 0 }}>

@@ -68,7 +68,7 @@ function increment(current) {
   return Math.max(1, Math.round((Number(current) || 0) * 0.01));
 }
 
-const CONDITIONS = ['PSA 10 (Gem Mint)', 'PSA 9 (Mint)', 'PSA 8 (Near Mint)', 'PSA 7 o menor', 'Sin gradar (Excelente/Bueno)'];
+const CONDITIONS = ['Sellado', 'Como nuevo', 'Con desgaste'];
 
 interface AuctionLiveProps { verified?: any; onRequireDni?: () => void; onBack?: () => void }
 
