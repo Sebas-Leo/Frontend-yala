@@ -109,6 +109,7 @@ export default function SellerDashboard({ onNew, onGoLive, onOpenAuction }: Sell
           <div className="yd__sub">Hola {user?.name?.split(' ')[0] || ''} — esto es lo que pasa con tu tienda hoy.</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
+          <Button variant="ghost" iconLeft={Icon.User ? <Icon.User size={17} /> : null} onClick={() => navigate('/seller/me')}>Ver mi perfil público</Button>
           <Button variant="secondary" iconLeft={Icon.TrendingUp ? <Icon.TrendingUp size={17} /> : null} onClick={onGoLive}>Iniciar transmisión</Button>
           <Button variant="primary" iconLeft={<Icon.Plus size={17} />} onClick={onNew}>Nueva publicación</Button>
         </div>

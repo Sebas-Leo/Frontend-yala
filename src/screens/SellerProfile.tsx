@@ -5,6 +5,7 @@ import {
   EmptyState, Pagination, Icon,
 } from '../ds';
 import { getUser, getUserListings } from '../api/users';
+import { getSellerStore } from '../api/seller';
 import { listReviewsByUser } from '../api/reviews';
 import { auctionCardFrom, listingCardFrom, reviewFromDto, userFromDto } from '../api/adapters';
 import { useFetch } from '../hooks/useFetch';
@@ -29,6 +30,10 @@ const css = `
 .sp__revauth{font-size:14px;font-weight:700;color:var(--text-strong);flex:1;}
 .sp__revdate{font-size:12px;color:var(--text-subtle);font-family:var(--font-mono);}
 .sp__revtxt{font-size:14px;color:var(--text-body);line-height:1.55;}
+.sp__store{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px 18px;margin:0 0 22px;}
+.sp__storehd{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--text-strong);margin-bottom:6px;}
+.sp__storerow{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--text-body);}
+.sp__storemuted{color:var(--text-subtle);}
 .sp__foot{display:flex;justify-content:center;margin-top:22px;}
 @media(max-width:1080px){.sp__grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:680px){.sp__grid{grid-template-columns:repeat(2,1fr)}.sp__head{flex-direction:column;text-align:center}}
@@ -50,6 +55,9 @@ export default function SellerProfile({ onBack, onOpenAuction }: SellerProfilePr
   const ready = sellerId != null;
 
   const userQ = useFetch((signal) => getUser(sellerId, { signal }), [sellerId], { enabled: ready });
+  // Store data only for verified sellers; 404 (no store) is ignored silently.
+  const storeQ = useFetch((signal) => getSellerStore(sellerId, { signal }), [sellerId],
+    { enabled: ready && !!userQ.data?.isVerifiedSeller });
   const listingsQ = useFetch((signal) => getUserListings(sellerId, { page: lPage, size: 12, signal }), [sellerId, lPage], { enabled: ready });
   const reviewsQ = useFetch((signal) => listReviewsByUser(sellerId, { page: rPage, size: 10, signal }), [sellerId, rPage], { enabled: ready });
 
@@ -89,6 +97,17 @@ export default function SellerProfile({ onBack, onOpenAuction }: SellerProfilePr
             <div className="sp__stat"><div className="sp__sval">{listingsQ.data?.totalElements ?? 0}</div><div className="sp__slabel">Publicaciones</div></div>
           </div>
         </>
+      )}
+
+      {storeQ.data && (
+        <div className="sp__store">
+          <div className="sp__storehd">{Icon.Package ? <Icon.Package size={17} /> : null} {storeQ.data.storeName}</div>
+          {storeQ.data.address ? (
+            <div className="sp__storerow">{Icon.MapPin ? <Icon.MapPin size={15} /> : null} {storeQ.data.address}</div>
+          ) : (
+            <div className="sp__storerow sp__storemuted">{Icon.MapPin ? <Icon.MapPin size={15} /> : null} Tienda online, sin local presencial</div>
+          )}
+        </div>
       )}
 
       <Tabs value={tab} onChange={setTab} tabs={[

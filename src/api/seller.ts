@@ -15,3 +15,8 @@ export function applySeller(body: {
 export function getMyApplication({ signal }: ReqOpts = {}) {
   return api.get('/seller/application/me', { signal });
 }
+
+// Public store data of a seller: { storeName, address }. 404 if no registered store.
+export function getSellerStore(sellerId: number | string, { signal }: ReqOpts = {}) {
+  return api.get(`/users/${sellerId}/store`, { signal });
+}
