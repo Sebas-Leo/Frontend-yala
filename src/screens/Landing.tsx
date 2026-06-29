@@ -198,7 +198,7 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
   const items = auctionsQ.data?.content || [];
 
   const openAuction = (id) => (onOpenAuction ? onOpenAuction(id) : navigate('/auction/' + id));
-  const goRegister = () => navigate('/login');
+  const goRegister = () => navigate('/register');
   const scrollToLive = () => {
     const el = document.getElementById('subastas');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });

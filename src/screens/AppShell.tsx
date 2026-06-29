@@ -154,7 +154,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
             </>
           ) : (
             <>
-              <button className="ysh__register" onClick={() => navigate('/login?tab=register')}>
+              <button className="ysh__register" onClick={() => navigate('/register')}>
                 <Icon.User size={17} /> Registrarse
               </button>
               <button className="ysh__login" onClick={() => onNav && onNav('login')}>
