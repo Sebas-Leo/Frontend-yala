@@ -4,7 +4,7 @@ import { LiveKitRoom, VideoTrack, useTracks } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { Button, Input, Price, Icon } from '../ds';
 import { useToast } from '../context/ToastContext';
-import { startLive, endLive, createFlashAuction, closeFlashAuction, listComments, postComment } from '../api/live';
+import { startLive, endLive, createFlashAuction, closeFlashAuction, listComments, postComment, summarizeComments } from '../api/live';
 import { subscribeLive, subscribeLiveChat } from '../api/realtime';
 import type { FlashAuction, LiveComment, LiveToken, LiveUpdateMessage } from '../types';
 
@@ -21,7 +21,9 @@ const css = `
 .ygl__card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px;}
 .ygl__label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-subtle);}
 .ygl__chat{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);display:flex;flex-direction:column;height:340px;}
-.ygl__chathd{padding:12px 14px;border-bottom:1px solid var(--border-subtle);font-weight:700;font-size:14px;color:var(--text-strong);}
+.ygl__chathd{padding:10px 14px;border-bottom:1px solid var(--border-subtle);font-weight:700;font-size:14px;color:var(--text-strong);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ygl__summary{padding:10px 12px;background:var(--brand-subtle);border-bottom:1px solid var(--border-subtle);font-size:12.5px;color:var(--text-body);white-space:pre-line;line-height:1.5;max-height:150px;overflow:auto;}
+.ygl__summary b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--brand);margin-bottom:4px;}
 .ygl__msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
 .ygl__msg{font-size:13px;line-height:1.4;color:var(--text-body);}
 .ygl__msg b{color:var(--text-strong);font-weight:700;margin-right:5px;}
@@ -59,6 +61,8 @@ export default function GoLive({ onBack }: Props) {
   const [auction, setAuction] = React.useState<FlashAuction | null>(null);
   const [messages, setMessages] = React.useState<LiveComment[]>([]);
   const [chatText, setChatText] = React.useState('');
+  const [summary, setSummary] = React.useState<string | null>(null);
+  const [summarizing, setSummarizing] = React.useState(false);
 
   React.useEffect(() => {
     if (!token) return;
@@ -79,6 +83,19 @@ export default function GoLive({ onBack }: Props) {
       if (c) setMessages((prev) => [...prev, c]);
     });
   }, [token]);
+
+  const runSummary = async () => {
+    if (!token || summarizing) return;
+    setSummarizing(true);
+    try {
+      const r = await summarizeComments(token.streamId, { limit: 80 });
+      setSummary(r?.summary || 'Sin resumen.');
+    } catch (err: any) {
+      toast.error('No se pudo resumir', err?.message || 'Intenta de nuevo.');
+    } finally {
+      setSummarizing(false);
+    }
+  };
 
   const sendComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,7 +223,16 @@ export default function GoLive({ onBack }: Props) {
               )}
             </div>
             <div className="ygl__chat">
-              <div className="ygl__chathd">Chat en vivo</div>
+              <div className="ygl__chathd">
+                <span>Chat en vivo</span>
+                <Button variant="ghost" size="sm" onClick={runSummary} disabled={summarizing}
+                  iconLeft={Icon.Sparkles ? <Icon.Sparkles size={14} /> : null}>
+                  {summarizing ? 'Resumiendo…' : 'Resumir IA'}
+                </Button>
+              </div>
+              {summary && (
+                <div className="ygl__summary"><b>Resumen del chat</b>{summary}</div>
+              )}
               <div className="ygl__msgs">
                 {messages.length === 0 ? (
                   <div style={{ fontSize: 13, color: 'var(--text-subtle)' }}>Aún no hay comentarios.</div>

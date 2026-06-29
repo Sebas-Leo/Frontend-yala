@@ -59,3 +59,8 @@ export function listComments(streamId: number | string, { page = 0, size = 30, s
 export function postComment(streamId: number | string, text: string) {
   return api.post(`/live/${streamId}/comments`, { text });
 }
+
+// AI summary of the chat for the host (seller-only). Returns { summary, commentCount, generatedAt }.
+export function summarizeComments(streamId: number | string, { limit = 50 }: { limit?: number } = {}) {
+  return api.post(`/live/${streamId}/comments/summary`, undefined, { params: { limit } });
+}
