@@ -14,7 +14,7 @@ import { useDebounce } from '../hooks/useDebounce';
 
 const css = `
 .yh{max-width:1280px;margin:0 auto;padding:24px;display:grid;grid-template-columns:248px 1fr;gap:28px;align-items:start;}
-.yh__side{position:sticky;top:136px;display:flex;flex-direction:column;gap:22px;}
+.yh__side{position:sticky;top:136px;display:flex;flex-direction:column;gap:22px;min-width:0;}
 .yh__fgroup{display:flex;flex-direction:column;gap:11px;}
 .yh__ftitle{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-subtle);}
 .yh__price{display:flex;align-items:center;gap:8px;}
@@ -34,8 +34,9 @@ const css = `
 .yh__livesrow>*{scroll-snap-align:start;}
 .yh__foot{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:28px;}
 .yh__range{font-size:12px;color:var(--text-subtle);font-family:var(--font-mono);}
-@media(max-width:1080px){.yh{grid-template-columns:1fr}.yh__side{position:static;flex-direction:row;flex-wrap:wrap}.yh__grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1080px){.yh{grid-template-columns:1fr;overflow-x:clip}.yh__side{position:static;flex-direction:row;flex-wrap:wrap}.yh__grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:760px){.yh{padding:16px}.yh__grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.yh__side{flex-direction:column;align-items:stretch}}
 @media(max-width:480px){.yh__grid{grid-template-columns:1fr}}
 `;
 let ic = false;

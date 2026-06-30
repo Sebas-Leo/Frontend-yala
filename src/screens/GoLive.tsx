@@ -2,6 +2,7 @@ import React from 'react';
 import '@livekit/components-styles';
 import { LiveKitRoom, VideoTrack, useTracks } from '@livekit/components-react';
 import { Track } from 'livekit-client';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button, Input, Price, Icon } from '../ds';
 import { useToast } from '../context/ToastContext';
 import { startLive, endLive, createFlashAuction, closeFlashAuction, listComments, postComment, summarizeComments } from '../api/live';
@@ -10,14 +11,18 @@ import type { FlashAuction, LiveComment, LiveToken, LiveUpdateMessage } from '..
 
 const css = `
 .ygl{max-width:1100px;margin:0 auto;padding:24px;}
+.ygl--live{max-width:1500px;padding:12px 24px;}
 .ygl__setup{max-width:520px;margin:40px auto;background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:28px;display:flex;flex-direction:column;gap:16px;}
 .ygl__h{font-size:20px;font-weight:800;color:var(--text-strong);}
 .ygl__sub{font-size:14px;color:var(--text-muted);}
-.ygl__grid{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;}
-.ygl__stage{background:#000;border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
-.ygl__stage video{width:100%;height:100%;object-fit:contain;background:#000;}
-.ygl__placeholder{color:#fff;opacity:.7;font-family:var(--font-sans);}
-.ygl__panel{display:flex;flex-direction:column;gap:14px;}
+.ygl__grid{display:flex;gap:16px;align-items:stretch;height:calc(100vh - 132px);}
+.ygl__stage{flex:1;min-width:0;position:relative;background:#000;border-radius:var(--radius-lg);overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.ygl__stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;}
+.ygl__placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.7;font-family:var(--font-sans);}
+.ygl__qr{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:3;background:#fff;border-radius:var(--radius-lg);padding:10px;box-shadow:0 6px 24px rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.92;transition:opacity .15s ease;}
+.ygl__qr:hover{opacity:1;}
+.ygl__qrlabel{font-size:11px;font-weight:700;color:#1a1a22;font-family:var(--font-sans);max-width:120px;text-align:center;line-height:1.2;}
+.ygl__panel{display:flex;flex-direction:column;gap:14px;width:380px;flex:none;height:100%;overflow-y:auto;}
 .ygl__card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px;}
 .ygl__label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-subtle);}
 .ygl__chat{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);display:flex;flex-direction:column;height:340px;}
@@ -28,19 +33,27 @@ const css = `
 .ygl__msg{font-size:13px;line-height:1.4;color:var(--text-body);}
 .ygl__msg b{color:var(--text-strong);font-weight:700;margin-right:5px;}
 .ygl__chatform{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border-subtle);}
-@media(max-width:900px){.ygl__grid{grid-template-columns:1fr;}}
-@media(max-width:600px){.ygl{padding:14px;}.ygl__chat{height:auto;max-height:50vh;}.ygl__setup{margin:16px auto;padding:20px;}}
+@media(max-width:900px){.ygl__grid{flex-direction:column;height:auto;}.ygl__stage{aspect-ratio:16/9;flex:none;}.ygl__panel{width:100%;height:auto;overflow:visible;}}
+@media(max-width:600px){.ygl{padding:14px;}.ygl__chat{height:auto;max-height:50vh;}.ygl__setup{margin:16px auto;padding:20px;}.ygl__qr{display:none;}}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }
 
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL;
 
-function PublisherStage() {
+// The seller's camera preview. Shows a QR (linking to the public live URL) so
+// the seller can display it on-camera and viewers join by scanning it.
+function PublisherStage({ qrUrl }: { qrUrl?: string }) {
   const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
   const cam = tracks.find((t) => t.publication?.kind === 'video' || t.source === Track.Source.Camera);
   return (
     <div className="ygl__stage">
+      {qrUrl && (
+        <div className="ygl__qr">
+          <QRCodeSVG value={qrUrl} size={120} />
+          <span className="ygl__qrlabel">Escanea para entrar</span>
+        </div>
+      )}
       {cam ? <VideoTrack trackRef={cam} /> : <div className="ygl__placeholder">Activando tu cámara…</div>}
     </div>
   );
@@ -186,11 +199,14 @@ export default function GoLive({ onBack }: Props) {
     );
   }
 
+  // Public URL viewers reach by scanning the QR (origin + /live/:streamId).
+  const liveUrl = typeof window !== 'undefined' ? `${window.location.origin}/live/${token.streamId}` : '';
+
   return (
-    <div className="ygl">
+    <div className="ygl ygl--live">
       <LiveKitRoom serverUrl={token.url || LIVEKIT_URL} token={token.token} connect audio video>
         <div className="ygl__grid">
-          <PublisherStage />
+          <PublisherStage qrUrl={liveUrl} />
           <div className="ygl__panel">
             <div className="ygl__card">
               <div className="ygl__label">Subasta flash</div>
