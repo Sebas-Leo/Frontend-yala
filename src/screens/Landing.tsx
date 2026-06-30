@@ -13,21 +13,21 @@ const css = `
 
 /* Hero */
 .yl__hero{background:linear-gradient(180deg,var(--brand-subtle) 0%,var(--surface-page) 100%);padding:76px 0 64px;text-align:center;}
-.yl__herogrid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;}
-.yl__herotext{text-align:left;}
+.yl__herogrid{display:flex;align-items:center;justify-content:center;gap:8px;}
+.yl__herotext{text-align:left;flex:0 1 auto;max-width:600px;}
 .yl__herogrid .yl__title{text-align:left;margin:0;max-width:none;}
 .yl__herogrid .yl__sub{margin:20px 0 0;text-align:left;max-width:560px;}
 .yl__herogrid .yl__cta{justify-content:flex-start;}
 .yl__herogrid .yl__stats{justify-content:flex-start;}
-.yl__heroimg{display:flex;justify-content:center;align-items:center;}
-.yl__heroimg img{width:100%;max-width:380px;height:auto;filter:drop-shadow(0 22px 40px rgba(17,20,45,.22));animation:yala-hero-float 4s ease-in-out infinite;}
+.yl__heroimg{flex:0 0 auto;display:flex;align-items:center;margin-left:-8px;}
+.yl__heroimg img{width:100%;max-width:300px;height:auto;filter:drop-shadow(0 22px 40px rgba(17,20,45,.22));animation:yala-hero-float 4s ease-in-out infinite;}
 @keyframes yala-hero-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 @media(max-width:900px){
-  .yl__herogrid{grid-template-columns:1fr;gap:18px;text-align:center;}
-  .yl__herotext{text-align:center;}
+  .yl__herogrid{flex-direction:column;gap:14px;text-align:center;}
+  .yl__herotext{text-align:center;max-width:none;}
   .yl__herogrid .yl__title,.yl__herogrid .yl__sub{text-align:center;margin-left:auto;margin-right:auto;}
   .yl__herogrid .yl__cta,.yl__herogrid .yl__stats{justify-content:center;}
-  .yl__heroimg{order:-1;}
+  .yl__heroimg{order:-1;margin-left:0;}
   .yl__heroimg img{max-width:230px;}
 }
 .yl__pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-pill);background:var(--surface-card);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xs);font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:22px;}
