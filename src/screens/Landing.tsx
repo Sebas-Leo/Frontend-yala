@@ -13,25 +13,16 @@ const css = `
 
 /* Hero */
 .yl__hero{background:linear-gradient(180deg,var(--brand-subtle) 0%,var(--surface-page) 100%);padding:76px 0 64px;text-align:center;}
-.yl__herogrid{display:flex;align-items:center;justify-content:center;gap:24px;}
-.yl__herotext{text-align:left;flex:0 1 560px;}
-.yl__herogrid .yl__title{text-align:left;margin:0;max-width:none;}
-.yl__herogrid .yl__sub{margin:20px 0 0;text-align:left;max-width:520px;}
-.yl__herogrid .yl__cta{justify-content:flex-start;}
-.yl__herogrid .yl__stats{justify-content:flex-start;}
-.yl__heroimg{flex:0 0 auto;position:relative;display:flex;align-items:center;justify-content:center;}
+.yl__herogrid{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.yl__herotext{width:100%;}
+.yl__heroimg{order:-1;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
 /* Soft brand halo so Groot looks grounded, not a floating cutout. */
-.yl__heroimg::before{content:"";position:absolute;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle,var(--brand-subtle) 0%,rgba(255,255,255,0) 68%);z-index:0;}
-.yl__heroimg img{position:relative;z-index:1;width:100%;max-width:330px;height:auto;filter:drop-shadow(0 24px 42px rgba(17,20,45,.24));animation:yala-hero-float 4.5s ease-in-out infinite;}
-@keyframes yala-hero-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-@media(max-width:900px){
-  .yl__herogrid{flex-direction:column;gap:10px;text-align:center;}
-  .yl__herotext{text-align:center;flex:0 1 auto;}
-  .yl__herogrid .yl__title,.yl__herogrid .yl__sub{text-align:center;margin-left:auto;margin-right:auto;}
-  .yl__herogrid .yl__cta,.yl__herogrid .yl__stats{justify-content:center;}
-  .yl__heroimg{order:-1;}
-  .yl__heroimg::before{width:240px;height:240px;}
-  .yl__heroimg img{max-width:230px;}
+.yl__heroimg::before{content:"";position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,var(--brand-subtle) 0%,rgba(255,255,255,0) 68%);z-index:0;}
+.yl__heroimg img{position:relative;z-index:1;width:100%;max-width:220px;height:auto;filter:drop-shadow(0 18px 34px rgba(17,20,45,.22));animation:yala-hero-float 4.5s ease-in-out infinite;}
+@keyframes yala-hero-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@media(max-width:560px){
+  .yl__heroimg::before{width:200px;height:200px;}
+  .yl__heroimg img{max-width:180px;}
 }
 .yl__pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-pill);background:var(--surface-card);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xs);font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:22px;}
 .yl__pill .yl__dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:yala-live-pulse 1.5s infinite;}
