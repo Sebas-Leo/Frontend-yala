@@ -10,6 +10,7 @@ import { listCategories } from '../api/categories';
 import { listBids, placeBid as placeBidApi } from '../api/bids';
 import { subscribeAuction } from '../api/realtime';
 import { listingFromDto, bidFromDto } from '../api/adapters';
+import { capPrice } from '../utils/format';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -135,7 +136,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
   // Keep the suggested bid in sync as the current price climbs.
   const prevCurrent = React.useRef(current);
   React.useEffect(() => {
-    setBid(current + inc);
+    setBid(Math.min(9999, current + inc));
     if (prevCurrent.current && current > prevCurrent.current) {
       setBumped(true);
       const t = setTimeout(() => setBumped(false), 1300);
@@ -373,7 +374,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
               <>
                 <div className="yal__bidform">
                   <Input label="Tu puja" prefix="S/." mono size="lg" value={bid}
-                    onChange={(e) => setBid(Number(e.target.value.replace(/\D/g, '')) || 0)} style={{ flex: 1, minWidth: 0 }} />
+                    onChange={(e) => setBid(Math.min(9999, Number(e.target.value.replace(/\D/g, '')) || 0))} style={{ flex: 1, minWidth: 0 }} />
                   <Button variant="primary" size="lg" iconLeft={<Icon.Gavel size={18} />} onClick={onPlaceClick} disabled={submitting}>Pujar</Button>
                 </div>
                 <div className="yal__hint">
@@ -445,7 +446,7 @@ export default function AuctionLive({ verified = false, onRequireDni, onBack }: 
             {totalBids === 0 ? (
               <div style={{ display: 'flex', gap: 12 }}>
                 <Input label="Precio inicial (S/.)" prefix="S/." mono value={form.startingPrice}
-                  onChange={(e) => setForm((f) => ({ ...f, startingPrice: e.target.value.replace(/[^\d.]/g, '') }))} style={{ flex: 1, minWidth: 0 }} />
+                  onChange={(e) => setForm((f) => ({ ...f, startingPrice: capPrice(e.target.value) }))} style={{ flex: 1, minWidth: 0 }} />
                 <Input label="Cierre" type="datetime-local" value={form.endsAt}
                   onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))} style={{ flex: 1, minWidth: 0 }} />
               </div>

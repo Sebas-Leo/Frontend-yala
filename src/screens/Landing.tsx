@@ -189,15 +189,6 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
   ensure();
   const navigate = useNavigate();
 
-  // Active auctions preview. The /auctions endpoint only returns id/price/endsAt/status,
-  // so we use /listings?mode=AUCTION which carries the image/title/seller/bids the cards need.
-  const auctionsQ = useFetch(
-    (signal) => listListings({ mode: 'AUCTION', size: 6, sort: 'createdAt,desc', signal }),
-    [],
-  );
-
-  const items = auctionsQ.data?.content || [];
-
   const { isAuthenticated, role } = useAuth();
   const location = useLocation();
   // Footer "¿Cómo funciona?" links to /#como-funciona; scroll to it when the hash is present.
@@ -207,16 +198,11 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
     if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, [location.hash]);
 
-  const openAuction = (id) => (onOpenAuction ? onOpenAuction(id) : navigate('/auction/' + id));
   // Logged in → "Vender" (seller dashboard or apply); otherwise → register.
   const goSell = () =>
     isAuthenticated ? navigate(role === 'SELLER' ? '/seller' : '/seller/apply') : navigate('/register');
-  const ctaLabel = isAuthenticated ? 'Vender' : '{ctaLabel}';
-  const scrollToLive = () => {
-    const el = document.getElementById('subastas');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    else navigate('/inicio');
-  };
+  const ctaLabel = isAuthenticated ? 'Vender' : 'Registrarse';
+  const goExplore = () => navigate('/inicio');
 
   return (
     <div className="yl yala-base">
@@ -235,7 +221,7 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
             <Button variant="primary" size="lg" iconLeft={<Icon.User size={18} />} onClick={goSell}>
               {ctaLabel}
             </Button>
-            <Button variant="secondary" size="lg" iconRight={<Icon.ChevronRight size={18} />} onClick={scrollToLive}>
+            <Button variant="secondary" size="lg" iconRight={<Icon.ChevronRight size={18} />} onClick={goExplore}>
               Ver subastas activas
             </Button>
           </div>
@@ -247,52 +233,7 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
         </div>
       </section>
 
-      {/* 2. Live auctions */}
-      <section id="subastas" className="yl__sec yl__live">
-        <div className="yl__wrap">
-          <div className="yl__livehd">
-            <div className="yl__livett"><span className="yl__livedot" /> Subastas activas en vivo</div>
-            <Button variant="ghost" size="sm" iconRight={<Icon.ChevronRight size={16} />} onClick={() => navigate('/inicio')}>
-              Ver todas
-            </Button>
-          </div>
-
-          {auctionsQ.loading ? (
-            <div className="yl__grid">{Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}</div>
-          ) : auctionsQ.error ? (
-            <EmptyState
-              tone="error"
-              icon={<Icon.AlertTriangle size={26} />}
-              title="No pudimos cargar las subastas"
-              description={auctionsQ.error.message || 'Ocurrió un error al consultar el servidor.'}
-              actions={<Button variant="secondary" onClick={auctionsQ.refetch}>Reintentar</Button>}
-            />
-          ) : items.length === 0 ? (
-            <EmptyState
-              icon={<Icon.Gavel size={26} />}
-              title="Pronto habrá nuevas subastas"
-              description="Regístrate para ser el primero en enterarte cuando se abran nuevas subastas."
-              actions={<Button variant="primary" iconLeft={<Icon.User size={17} />} onClick={goSell}>{ctaLabel}</Button>}
-            />
-          ) : (
-            <div className="yl__grid">
-              {items.map((dto) => {
-                const c = auctionCardFrom(dto);
-                return (
-                  <AuctionCard
-                    key={c.id}
-                    image={c.image} title={c.title} currentBid={c.currentBid} bidsCount={c.bidsCount}
-                    endsAt={c.endsAt} status={c.status} sellerName={c.sellerName} sellerVerified={c.sellerVerified}
-                    as="a" href="#" onClick={(e) => { e.preventDefault(); openAuction(c.id); }}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 3. Categories */}
+      {/* 2. Categories */}
       <section className="yl__sec">
         <div className="yl__wrap">
           <div className="yl__sechd">

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { IconButton, Avatar, Icon } from '../ds';
-import { listCategories } from '../api/categories';
 import { getUnreadCount } from '../api/notifications';
 import { subscribeNotifications } from '../api/realtime';
 import { notificationFromDto } from '../api/adapters';
@@ -71,17 +70,15 @@ interface AppShellProps { user?: any; onNav?: (d: any) => void; onCat?: () => vo
 export default function AppShell({ onNav, onLogout, user = null }: AppShellProps) {
   ensure();
   const navigate = useNavigate();
-  // Category tabs only make sense on the explore/auctions page.
-  const showCats = useLocation().pathname === '/inicio';
+  // Top nav tabs (Subastar / Lives), shown everywhere except landing/login/register.
+  const loc = useLocation();
+  const showTabs = !['/', '/login', '/register'].includes(loc.pathname);
+  const navTab = loc.pathname.startsWith('/live') ? 'lives' : 'subastar';
   const auth = useAuth();
   const toast = useToast();
   const [searchParams] = useSearchParams();
-  const activeCat = searchParams.get('category') || null;
 
   const [menuOpen, setMenuOpen] = React.useState(false);
-
-  const catsQ = useFetch((signal) => listCategories({ signal }), []);
-  const categories = catsQ.data || [];
 
   // Unread badge — only meaningful for an authed user; refreshed periodically.
   const unreadQ = useFetch((signal) => getUnreadCount({ signal }), [!!user], { enabled: !!user });
@@ -122,18 +119,14 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
 
-  const goCategory = (name) => navigate(name ? `/inicio?category=${encodeURIComponent(name)}` : '/inicio');
-
-  const cats = (
+  const tabs = (
     <>
-      <span className={`ysh__cat${!activeCat ? ' ysh__cat--active' : ''}`} onClick={() => goCategory(null)}>
-        <Icon.LayoutGrid size={15} /> Todo
+      <span className={`ysh__cat${navTab === 'subastar' ? ' ysh__cat--active' : ''}`} onClick={() => navigate('/inicio')}>
+        {Icon.Gavel ? <Icon.Gavel size={15} /> : null} Subastar
       </span>
-      {categories.map((c) => (
-        <span key={c.id} className={`ysh__cat${activeCat === c.name ? ' ysh__cat--active' : ''}`} onClick={() => goCategory(c.name)}>
-          {c.name}
-        </span>
-      ))}
+      <span className={`ysh__cat${navTab === 'lives' ? ' ysh__cat--active' : ''}`} onClick={() => navigate('/lives')}>
+        {Icon.Radio ? <Icon.Radio size={15} /> : null} Lives
+      </span>
     </>
   );
 
@@ -143,7 +136,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
         <div className="ysh__logo" onClick={() => navigate('/')}>
           <img src="/assets/yala-logo.png" alt="Yala" />
         </div>
-        {showCats && <div className="ysh__nav ysh__nav--inline">{cats}</div>}
+        {showTabs && <div className="ysh__nav ysh__nav--inline">{tabs}</div>}
         <label className="ysh__search">
           <Icon.Search size={18} />
           <input
@@ -185,7 +178,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
           )}
         </div>
       </div>
-      {showCats && <div className="ysh__nav ysh__nav--row">{cats}</div>}
+      {showTabs && <div className="ysh__nav ysh__nav--row">{tabs}</div>}
     </div>
   );
 }

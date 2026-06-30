@@ -5,6 +5,7 @@ import {
 } from '../ds';
 import { listListings } from '../api/listings';
 import { listLives } from '../api/live';
+import { listCategories } from '../api/categories';
 import LiveCard from '../components/LiveCard';
 import { auctionCardFrom } from '../api/adapters';
 import { useFetch } from '../hooks/useFetch';
@@ -24,6 +25,10 @@ const css = `
 .yh__count{font-size:14px;color:var(--text-muted);}
 .yh__count b{color:var(--text-strong);font-weight:700;}
 .yh__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.yh__cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.yh__cat{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;white-space:nowrap;border:1px solid var(--border-subtle);transition:all var(--dur-fast);}
+.yh__cat:hover{background:var(--surface-sunken);color:var(--text-strong);}
+.yh__cat--active{background:var(--brand-subtle);color:var(--brand);border-color:transparent;}
 .yh__lives{margin-bottom:28px;}
 .yh__livesrow{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;}
 .yh__livesrow>*{scroll-snap-align:start;}
@@ -83,6 +88,10 @@ export default function HomeScreen({ onOpenAuction, onOpenLive }: HomeScreenProp
   // Active live streams for the top carousel (public endpoint).
   const { data: livesData } = useFetch((signal) => listLives({ page: 0, size: 12, signal }), []);
   const lives = livesData?.content || [];
+
+  // Category chips (moved here from the global navbar).
+  const { data: catsData } = useFetch((signal) => listCategories({ signal }), []);
+  const categories = catsData || [];
 
   const condition = get('condition');
   const category = get('category');
@@ -145,6 +154,14 @@ export default function HomeScreen({ onOpenAuction, onOpenLive }: HomeScreenProp
         onClear={clearFilters}
       />
       <div className="yh__main">
+        {categories.length > 0 && (
+          <div className="yh__cats">
+            <span className={`yh__cat${!category ? ' yh__cat--active' : ''}`} onClick={() => setParams({ category: '' })}>Todo</span>
+            {categories.map((c) => (
+              <span key={c.id} className={`yh__cat${category === c.name ? ' yh__cat--active' : ''}`} onClick={() => setParams({ category: c.name })}>{c.name}</span>
+            ))}
+          </div>
+        )}
         {lives.length > 0 && (
           <section className="yh__lives">
             <div className="yh__livehd">

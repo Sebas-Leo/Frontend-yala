@@ -6,6 +6,7 @@
 import React from 'react';
 
 const Home = React.lazy(() => import('./screens/Home'));
+const Lives = React.lazy(() => import('./screens/Lives'));
 const Landing = React.lazy(() => import('./screens/Landing'));
 const AuctionLive = React.lazy(() => import('./screens/AuctionLive'));
 const LiveView = React.lazy(() => import('./screens/LiveView'));
@@ -50,7 +51,7 @@ export interface RouteDef {
 export function buildRoutes(ctx: any): RouteDef[] {
   const { navigate, toast, auth } = ctx;
 
-  const handleAuth = (profile: any) => navigate(profile && profile.role === 'SELLER' ? '/seller' : '/inicio');
+  const handleAuth = (_profile: any) => navigate('/inicio');
   const verifyIdentity = () => {
     auth.setIdentityVerified(true);
     toast.success('Identidad verificada', 'Ya puedes pujar y comprar en Yala.', 'Shield');
@@ -67,6 +68,7 @@ export function buildRoutes(ctx: any): RouteDef[] {
         />
       ),
     },
+    { path: '/lives', element: <Lives onOpenLive={(id) => navigate('/live/' + id)} /> },
     {
       path: '/live/:id',
       element: (

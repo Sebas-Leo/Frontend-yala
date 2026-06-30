@@ -7,7 +7,7 @@ import { useFetch } from '../hooks/useFetch';
 import { useForm } from '../hooks/useForm';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { isoFromDays } from '../utils/format';
+import { isoFromDays, capPrice } from '../utils/format';
 
 const css = `
 .ca{max-width:640px;margin:0 auto;padding:24px;}
@@ -96,7 +96,7 @@ export default function CreateAuction({ onBack }: CreateAuctionProps) {
 
           <div>
             <Input label="Precio inicial (S/.)" prefix="S/." mono placeholder="0.00" hint="Es la puja mínima de apertura."
-              value={form.values.startingPrice} onChange={(e) => form.setValue('startingPrice', e.target.value.replace(/[^\d.]/g, ''))}
+              value={form.values.startingPrice} onChange={(e) => form.setValue('startingPrice', capPrice(e.target.value))}
               error={form.errors.startingPrice} required />
           </div>
 

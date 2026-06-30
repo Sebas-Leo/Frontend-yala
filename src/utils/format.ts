@@ -31,6 +31,17 @@ export function money(value, currency = 'S/.') {
   return `${currency} ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// Sanitize a price input: digits + one dot, máx 2 decimals, capped at 9999.99 (4-digit integer part).
+export function capPrice(raw) {
+  let v = String(raw).replace(/[^\d.]/g, '');
+  const parts = v.split('.');
+  if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+  const [intp, decp] = v.split('.');
+  v = (intp ?? '') + (decp != null ? '.' + decp.slice(0, 2) : '');
+  if (Number(v) > 9999.99) v = '9999.99';
+  return v;
+}
+
 // ISO-8601 string `days` from now (for auction endsAt). Local time, no timezone suffix
 // so the backend parses it as a LocalDateTime.
 export function isoFromDays(days) {
