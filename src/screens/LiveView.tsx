@@ -12,6 +12,7 @@ import { useFetch } from '../hooks/useFetch';
 import type { FlashAuction, LiveComment, LiveDetail, LiveToken, LiveUpdateMessage } from '../types';
 
 const css = `
+/* ── Desktop layout (2-col) ─────────────────────────────────────────────── */
 .ylv{max-width:1280px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;}
 .ylv__back{margin-bottom:14px;}
 .ylv__stage{background:#000;border-radius:var(--radius-lg);overflow:hidden;position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
@@ -39,6 +40,39 @@ const css = `
 .ylv__statetag--deserted{background:var(--surface-sunken);color:var(--text-muted);}
 @media(max-width:1000px){.ylv{grid-template-columns:1fr;}.ylv__side{position:static;}}
 @media(max-width:600px){.ylv{padding:14px;}.ylv__chat{height:auto;max-height:55vh;}}
+
+/* ── Inmersivo (TikTok/Whatnot) — viewport angosto (≤720px) ─────────────── */
+.ylvi__root{position:fixed;inset:0;z-index:200;background:#000;overflow:hidden;}
+.ylvi__stageroot{position:absolute;inset:0;overflow:hidden;}
+.ylvi__stageinner{position:absolute;inset:0;}
+.ylvi__stageinner video{width:100%;height:100%;object-fit:cover;background:#000;}
+.ylvi__stageno{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.75);font-family:var(--font-sans);font-size:14px;text-align:center;padding:32px;line-height:1.5;}
+.ylvi__topscrim{position:absolute;top:0;left:0;right:0;background:linear-gradient(to bottom,rgba(0,0,0,0.58) 0%,transparent 100%);padding-top:max(12px,env(safe-area-inset-top,12px));padding-left:16px;padding-right:16px;padding-bottom:24px;}
+.ylvi__toprow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.ylvi__backbtn{background:none;border:none;cursor:pointer;color:#fff;padding:4px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+.ylvi__livebadge{display:inline-flex;align-items:center;gap:5px;background:var(--live);color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:var(--radius-pill);letter-spacing:.04em;text-transform:uppercase;}
+.ylvi__dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:yala-live-pulse 1.5s infinite;}
+.ylvi__livetitle{font-size:16px;font-weight:800;color:#fff;font-family:var(--font-sans);line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ylvi__liveseller{font-size:13px;color:rgba(255,255,255,0.75);font-family:var(--font-sans);margin-top:3px;}
+.ylvi__bottom{position:absolute;bottom:0;left:0;right:0;display:flex;flex-direction:column;gap:8px;padding:8px 12px;padding-bottom:max(16px,calc(env(safe-area-inset-bottom,0px) + 16px));}
+.ylvi__chatoverlay{display:flex;flex-direction:column;gap:4px;max-width:68%;pointer-events:none;}
+.ylvi__chatpill{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;background:rgba(15,15,22,0.55);border-radius:12px;padding:5px 10px;font-size:13px;color:#fff;font-family:var(--font-sans);line-height:1.4;gap:2px;}
+.ylvi__chatpill b{font-weight:700;margin-right:2px;}
+.ylvi__acard{background:var(--surface-card,#fff);border-radius:var(--radius-xl,18px);padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-live,0 4px 32px rgba(251,101,20,0.22));}
+.ylvi__acardtop{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ylvi__acardlabel{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--live);}
+.ylvi__acardname{font-size:14px;font-weight:800;color:var(--text-strong);font-family:var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ylvi__acardmeta{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);}
+.ylvi__whatnotrow{display:flex;gap:8px;align-items:center;}
+.ylvi__customrow{display:flex;gap:8px;align-items:center;}
+.ylvi__gatetext{font-size:12px;color:var(--text-muted);margin:0;}
+.ylvi__commentbar{display:flex;gap:8px;align-items:center;}
+.ylvi__commentinput{flex:1;height:42px;border-radius:var(--radius-pill,999px);background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.25);padding:0 16px;font-family:var(--font-sans);font-size:14px;color:#fff;outline:none;-webkit-appearance:none;}
+.ylvi__commentinput:focus{border-color:rgba(255,255,255,0.5);}
+.ylvi__commentinput::placeholder{color:rgba(255,255,255,0.5);}
+.ylvi__logingate{background:rgba(15,15,22,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:var(--radius-xl,18px);padding:14px;display:flex;flex-direction:column;gap:10px;}
+.ylvi__logintext{font-size:13px;color:rgba(255,255,255,0.85);font-family:var(--font-sans);text-align:center;margin:0;}
+.ylvi__loginbtnrow{display:flex;gap:8px;}
 `;
 let ic = false;
 function ensure() { if (!ic) { ic = true; const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); } }
@@ -46,16 +80,16 @@ function ensure() { if (!ic) { ic = true; const s = document.createElement('styl
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL;
 
 // Renders the seller's published camera (subscribe-only viewer).
-function Stage() {
+function Stage({ fullscreen }: { fullscreen?: boolean }) {
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], { onlySubscribed: true });
   const cam = tracks.find((t) => t.publication?.kind === 'video');
   return (
-    <div className="ylv__stage">
-      <span className="ylv__livebadge"><span className="ylv__dot" /> En vivo</span>
+    <div className={fullscreen ? 'ylvi__stageinner' : 'ylv__stage'}>
+      {!fullscreen && <span className="ylv__livebadge"><span className="ylv__dot" /> En vivo</span>}
       {cam ? (
         <VideoTrack trackRef={cam} />
       ) : (
-        <div className="ylv__offline">Esperando el video del vendedor…</div>
+        <div className={fullscreen ? 'ylvi__stageno' : 'ylv__offline'}>Esperando el video del vendedor…</div>
       )}
       <RoomAudioRenderer />
     </div>
@@ -84,6 +118,10 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
   const [bid, setBid] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [ended, setEnded] = React.useState(false);
+  const [customMode, setCustomMode] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 720px)').matches : false
+  );
   // Tracks whether the LiveKit room ever connected, so a disconnect after the
   // host ends the stream is treated as "ended" instead of a generic error.
   const connectedRef = React.useRef(false);
@@ -120,18 +158,43 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
     });
   }, [id]);
 
+  // Viewport listener: switch between desktop (2-col) and immersive layouts.
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 720px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   const minNext = auction
     ? (auction.currentPrice == null ? auction.basePrice : auction.currentPrice + auction.bidIncrement)
     : 0;
+
+  // Auto-seed the bid input with the minimum next amount when the auction changes or a new bid lands.
+  React.useEffect(() => {
+    if (!auction) return;
+    setBid((prev) => {
+      const cur = parseFloat(prev);
+      if (!prev || isNaN(cur) || cur < minNext) return String(minNext);
+      return prev;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minNext, auction?.id]);
+
+  // Event-free comment handler, shared by both layouts.
+  const handleComment = async () => {
+    if (!chatText.trim() || !isAuthenticated) return;
+    const text = chatText.trim();
+    setChatText('');
+    try { await postComment(id!, text); }
+    catch (err: any) { toast.error('No se pudo enviar', err?.message || 'Intenta de nuevo.'); }
+  };
 
   const sendComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatText.trim()) return;
     if (!isAuthenticated) { toast.error('Inicia sesión', 'Necesitas una cuenta para comentar.'); return; }
-    const text = chatText.trim();
-    setChatText('');
-    try { await postComment(id!, text); }
-    catch (err: any) { toast.error('No se pudo enviar', err?.message || 'Intenta de nuevo.'); }
+    await handleComment();
   };
 
   const submitBid = async () => {
@@ -156,6 +219,24 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
     }
   };
 
+  // Quick bid: puja el mínimo siguiente de un toque (layout inmersivo).
+  const quickBid = async () => {
+    if (!auction) return;
+    if (!isAuthenticated) { toast.error('Inicia sesión', 'Necesitas una cuenta para pujar.'); return; }
+    if (!verified) { onRequireDni && onRequireDni(); return; }
+    setSubmitting(true);
+    try {
+      await placeLiveBid(auction.id, minNext);
+      setCustomMode(false);
+      toast.success('¡Puja registrada!', 'Vas liderando la subasta.', 'Gavel');
+    } catch (err: any) {
+      if (err?.status === 409) toast.error('El precio cambió', 'Alguien pujó antes. Revisa el nuevo precio.');
+      else toast.error('No se pudo pujar', err?.message || 'Intenta de nuevo.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!detail) {
     return <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>Cargando transmisión…</div>;
   }
@@ -166,6 +247,187 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
       ? <span className="ylv__statetag ylv__statetag--deserted">Desierta</span>
       : null;
 
+  // ── Inmersivo (TikTok/Whatnot) — solo viewport angosto (≤720px) ────────────
+  if (isMobile) {
+    return (
+      <div className="ylvi__root">
+
+        {/* Video de fondo a pantalla completa */}
+        <div className="ylvi__stageroot">
+          {ended ? (
+            <div className="ylvi__stageno">La transmisión finalizó.<br />¡Gracias por acompañarnos!</div>
+          ) : LIVEKIT_URL && tk?.token ? (
+            <LiveKitRoom
+              serverUrl={tk.url || LIVEKIT_URL}
+              token={tk.token}
+              connect
+              audio={false}
+              video={false}
+              onConnected={() => { connectedRef.current = true; }}
+              onDisconnected={() => { if (connectedRef.current) setEnded(true); }}
+            >
+              <Stage fullscreen />
+            </LiveKitRoom>
+          ) : (
+            <div className="ylvi__stageno">El video no está disponible.</div>
+          )}
+        </div>
+
+        {/* Scrim superior: botón volver + badge "En vivo" + título/vendedor */}
+        <div className="ylvi__topscrim">
+          <div className="ylvi__toprow">
+            <button className="ylvi__backbtn" onClick={onBack} aria-label="Volver">
+              {Icon.ChevronLeft ? <Icon.ChevronLeft size={26} /> : '‹'}
+            </button>
+            <span className="ylvi__livebadge">
+              <span className="ylvi__dot" /> En vivo
+            </span>
+          </div>
+          <div className="ylvi__livetitle">{detail.title}</div>
+          {detail.seller && <div className="ylvi__liveseller">{detail.seller.name}</div>}
+        </div>
+
+        {/* Overlay inferior: chat + card de subasta + barra de comentario/login */}
+        <div className="ylvi__bottom">
+
+          {/* Últimos 5 mensajes del chat (no interactivo) */}
+          {messages.length > 0 && (
+            <div className="ylvi__chatoverlay">
+              {messages.slice(-5).map((m) => (
+                <div key={m.id} className="ylvi__chatpill">
+                  <b>{m.userName ?? 'Anónimo'}</b>{m.text}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Card flotante de subasta flash */}
+          {auction && !ended && (
+            <div className="ylvi__acard">
+              <div className="ylvi__acardtop">
+                <span className="ylvi__acardlabel">Subasta flash</span>
+                {stateTag}
+              </div>
+              <div className="ylvi__acardname">{auction.title}</div>
+              <div className="ylvi__acardmeta">
+                S/. {(auction.currentPrice ?? auction.basePrice).toFixed(2)}
+                {'  ·  '}
+                {auction.totalBids} puja{auction.totalBids !== 1 ? 's' : ''}
+                {'  ·  '}
+                Mín. S/. {minNext}
+              </div>
+
+              {auction.status === 'ACTIVE' && isAuthenticated && (
+                customMode ? (
+                  <div className="ylvi__customrow">
+                    <Input
+                      prefix="S/."
+                      mono
+                      placeholder={String(minNext)}
+                      value={bid}
+                      onChange={(e: any) => {
+                        let v = e.target.value.replace(/[^\d.]/g, '');
+                        if (Number(v) > 9999) v = '9999';
+                        setBid(v);
+                      }}
+                      style={{ flex: 1, minWidth: 0 }}
+                    />
+                    <Button
+                      variant="live"
+                      size="md"
+                      onClick={submitBid}
+                      disabled={submitting}
+                      iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}
+                    >
+                      {submitting ? '…' : 'Pujar'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="ylvi__whatnotrow">
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      style={{ flex: 1 }}
+                      onClick={() => { setCustomMode(true); setBid(String(minNext)); }}
+                    >
+                      Personalizar
+                    </Button>
+                    <Button
+                      variant="live"
+                      size="md"
+                      style={{ flex: 2 }}
+                      onClick={quickBid}
+                      disabled={submitting}
+                      iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}
+                    >
+                      {submitting ? '…' : `Pujar  S/. ${minNext}`}
+                    </Button>
+                  </div>
+                )
+              )}
+
+              {auction.status === 'ACTIVE' && !isAuthenticated && (
+                <p className="ylvi__gatetext">Inicia sesión para pujar.</p>
+              )}
+
+              {auction.status === 'SOLD' && auction.winnerName && (
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
+                  Ganador: <b>{auction.winnerName}</b>
+                </div>
+              )}
+              {auction.status === 'SOLD' && user?.name && auction.winnerName === user.name && (
+                <Button
+                  variant="live"
+                  size="md"
+                  fullWidth
+                  onClick={() => navigate('/orders')}
+                  iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}
+                >
+                  ¡Ganaste! Pagar ahora
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Barra de comentario (logueado) o CTA de login (invitado) */}
+          {isAuthenticated ? (
+            <div className="ylvi__commentbar">
+              <input
+                className="ylvi__commentinput"
+                value={chatText}
+                onChange={(e) => setChatText(e.target.value)}
+                placeholder={ended ? 'El chat se cerró' : 'Escribe un comentario…'}
+                disabled={ended}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleComment(); } }}
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleComment}
+                disabled={ended || !chatText.trim()}
+              >
+                Enviar
+              </Button>
+            </div>
+          ) : (
+            <div className="ylvi__logingate">
+              <p className="ylvi__logintext">Inicia sesión para pujar y comentar en el live.</p>
+              <div className="ylvi__loginbtnrow">
+                <Button variant="live" size="md" fullWidth onClick={() => navigate('/login')}>
+                  Iniciar sesión
+                </Button>
+                <Button variant="secondary" size="md" fullWidth onClick={() => navigate('/register')}>
+                  Registrarse
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Layout desktop (2 columnas, sin cambios) ─────────────────────────────────
   return (
     <div>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '12px 24px 0' }}>
@@ -218,7 +480,7 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
                       onChange={(e: any) => { let v = e.target.value.replace(/[^\d.]/g, ''); if (Number(v) > 9999) v = '9999'; setBid(v); }}
                       style={{ flex: 1, minWidth: 0 }} />
                     <Button onClick={submitBid} disabled={submitting}
-                      iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}>Pujar</Button>
+                      iconLeft={Icon.Gavel ? <Icon.Gavel size={16} /> : null}>Pujar S/. {minNext}</Button>
                   </div>
                 )}
                 {auction.status === 'SOLD' && auction.winnerName && (
