@@ -13,6 +13,23 @@ const css = `
 
 /* Hero */
 .yl__hero{background:linear-gradient(180deg,var(--brand-subtle) 0%,var(--surface-page) 100%);padding:76px 0 64px;text-align:center;}
+.yl__herogrid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;}
+.yl__herotext{text-align:left;}
+.yl__herogrid .yl__title{text-align:left;margin:0;max-width:none;}
+.yl__herogrid .yl__sub{margin:20px 0 0;text-align:left;max-width:560px;}
+.yl__herogrid .yl__cta{justify-content:flex-start;}
+.yl__herogrid .yl__stats{justify-content:flex-start;}
+.yl__heroimg{display:flex;justify-content:center;align-items:center;}
+.yl__heroimg img{width:100%;max-width:380px;height:auto;filter:drop-shadow(0 22px 40px rgba(17,20,45,.22));animation:yala-hero-float 4s ease-in-out infinite;}
+@keyframes yala-hero-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@media(max-width:900px){
+  .yl__herogrid{grid-template-columns:1fr;gap:18px;text-align:center;}
+  .yl__herotext{text-align:center;}
+  .yl__herogrid .yl__title,.yl__herogrid .yl__sub{text-align:center;margin-left:auto;margin-right:auto;}
+  .yl__herogrid .yl__cta,.yl__herogrid .yl__stats{justify-content:center;}
+  .yl__heroimg{order:-1;}
+  .yl__heroimg img{max-width:230px;}
+}
 .yl__pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--radius-pill);background:var(--surface-card);border:1px solid var(--border-subtle);box-shadow:var(--shadow-xs);font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:22px;}
 .yl__pill .yl__dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:yala-live-pulse 1.5s infinite;}
 .yl__hero .yl__title{font:var(--weight-extrabold) 50px/1.1 var(--font-sans);letter-spacing:-.02em;color:var(--text-strong);margin:0 auto;max-width:860px;text-align:center;}
@@ -208,7 +225,8 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
     <div className="yl yala-base">
       {/* 1. Hero */}
       <section className="yl__hero">
-        <div className="yl__wrap">
+        <div className="yl__wrap yl__herogrid">
+          <div className="yl__herotext">
           <span className="yl__pill"><span className="yl__dot" /> Subastas en vivo todos los días</span>
           <h1 className="yl__title">
             Encuentra ese coleccionable que tanto buscabas. <em>Sin riesgo, sin intermediarios dudosos.</em>
@@ -229,6 +247,10 @@ export default function LandingScreen({ onOpenAuction }: LandingScreenProps) {
             <div className="yl__stat"><span className="yl__statn">100%</span><span className="yl__statl">pago en custodia</span></div>
             <div className="yl__stat"><span className="yl__statn">92%</span><span className="yl__statl">para el vendedor</span></div>
             <div className="yl__stat"><span className="yl__statn">S/.</span><span className="yl__statl">precios en soles</span></div>
+          </div>
+          </div>
+          <div className="yl__heroimg">
+            <img src="/assets/groot-hero.png" alt="Coleccionable de Yala" />
           </div>
         </div>
       </section>

@@ -12,6 +12,8 @@ import { useDebounce } from '../hooks/useDebounce';
 const shellCSS = `
 .ysh{position:sticky;top:0;z-index:50;font-family:var(--font-sans);}
 .ysh__bar{height:64px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:20px;padding:0 24px;}
+.ysh__bar--centered{justify-content:center;}
+.ysh__bar--centered .ysh__search{flex:0 1 460px;}
 .ysh__logo{display:flex;align-items:center;gap:10px;cursor:pointer;flex:none;}
 .ysh__logo img{height:40px;width:auto;display:block;object-fit:contain;}
 .ysh__search{flex:1;max-width:560px;display:flex;align-items:center;gap:10px;background:var(--surface-sunken);border:1px solid transparent;border-radius:var(--radius-pill);padding:0 16px;height:42px;color:var(--text-muted);transition:all var(--dur-fast) var(--ease-out);cursor:text;}
@@ -132,7 +134,7 @@ export default function AppShell({ onNav, onLogout, user = null }: AppShellProps
 
   return (
     <div className="ysh">
-      <div className="ysh__bar">
+      <div className={`ysh__bar${loc.pathname === '/' ? ' ysh__bar--centered' : ''}`}>
         <div className="ysh__logo" onClick={() => navigate('/')}>
           <img src="/assets/yala-logo.png" alt="Yala" />
         </div>
