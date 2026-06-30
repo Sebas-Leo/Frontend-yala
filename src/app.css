@@ -9,3 +9,23 @@ body {
 }
 #root { min-height: 100vh; }
 a { color: inherit; text-decoration: none; }
+
+/* Navbar (.ysh): en desktop la barra queda full-width (fondo + borde se mueven a
+   .ysh) pero su CONTENIDO se acota a --container-max y se centra, para que en
+   pantallas anchas el logo y las acciones no se estiren a los extremos.
+   Se toca SOLO .ysh__bar — nunca .ysh__nav — para no romper las pestañas inline
+   (Subastar/Lives) ni ocultar la búsqueda/acciones. Acotado a >720px para dejar
+   intacto el navbar móvil (hamburguesa + dropdown + fila de pestañas). */
+@media (min-width: 721px) {
+  .ysh {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .ysh > .ysh__bar {
+    max-width: var(--container-max);
+    width: 100%;
+    margin-inline: auto;
+    background: transparent;
+    border-bottom: none;
+  }
+}
