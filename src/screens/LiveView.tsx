@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import '@livekit/components-styles';
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useTracks } from '@livekit/components-react';
 import { Track } from 'livekit-client';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button, Input, Price, Icon, EmptyState } from '../ds';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -12,24 +13,30 @@ import { useFetch } from '../hooks/useFetch';
 import type { FlashAuction, LiveComment, LiveDetail, LiveToken, LiveUpdateMessage } from '../types';
 
 const css = `
-/* ── Desktop layout (2-col) ─────────────────────────────────────────────── */
-.ylv{max-width:1280px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;}
-.ylv__back{margin-bottom:14px;}
-.ylv__stage{background:#000;border-radius:var(--radius-lg);overflow:hidden;position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;}
-.ylv__stage video{width:100%;height:100%;object-fit:contain;background:#000;}
-.ylv__offline{color:#fff;opacity:.7;font-family:var(--font-sans);text-align:center;padding:24px;}
-.ylv__livebadge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;background:var(--live);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:var(--radius-pill);text-transform:uppercase;z-index:2;}
+/* ── Desktop layout (video grande + sidebar) ─────────────────────────────── */
+.ylv{width:100%;max-width:1600px;margin:0 auto;padding:12px 24px;display:flex;gap:16px;align-items:stretch;height:calc(100vh - 124px);}
+.ylv__main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.ylv__stage{flex:1;min-height:0;background:#000;border-radius:var(--radius-lg);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
+.ylv__stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;}
+.ylv__offline{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.7;font-family:var(--font-sans);text-align:center;padding:24px;}
+.ylv__topscrim{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;gap:12px;padding:14px 16px 28px;background:linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 100%);pointer-events:none;}
+.ylv__topscrim>*{pointer-events:auto;}
+.ylv__backbtn{background:rgba(0,0,0,0.35);border:none;cursor:pointer;color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;}
+.ylv__topinfo{min-width:0;flex:1;}
+.ylv__title{font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ylv__seller{font-size:13px;color:rgba(255,255,255,0.8);text-shadow:0 1px 4px rgba(0,0,0,0.5);}
+.ylv__livebadge{position:absolute;top:14px;right:16px;display:inline-flex;align-items:center;gap:6px;background:var(--live);color:#fff;font-size:12px;font-weight:800;padding:4px 10px;border-radius:var(--radius-pill);text-transform:uppercase;z-index:3;}
 .ylv__dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:yala-live-pulse 1.5s infinite;}
-.ylv__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;}
-.ylv__title{font-size:20px;font-weight:800;color:var(--text-strong);}
-.ylv__seller{font-size:14px;color:var(--text-muted);}
-.ylv__side{display:flex;flex-direction:column;gap:16px;position:sticky;top:96px;}
-.ylv__auction{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px;}
+.ylv__qr{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:3;background:#fff;border-radius:var(--radius-lg);padding:10px;box-shadow:0 6px 24px rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.92;transition:opacity .15s ease;}
+.ylv__qr:hover{opacity:1;}
+.ylv__qrlabel{font-size:11px;font-weight:700;color:#1a1a22;font-family:var(--font-sans);max-width:120px;text-align:center;line-height:1.2;}
+.ylv__side{width:380px;flex:none;display:flex;flex-direction:column;gap:16px;height:100%;}
+.ylv__auction{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px;flex:none;}
 .ylv__atitle{font-size:15px;font-weight:800;color:var(--text-strong);}
 .ylv__arow{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text-muted);}
 .ylv__bidrow{display:flex;gap:8px;align-items:center;}
 .ylv__bidrow>button{flex:none;white-space:nowrap;}
-.ylv__chat{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);display:flex;flex-direction:column;height:420px;}
+.ylv__chat{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);display:flex;flex-direction:column;flex:1;min-height:0;}
 .ylv__chathd{padding:12px 14px;border-bottom:1px solid var(--border-subtle);font-weight:700;font-size:14px;color:var(--text-strong);}
 .ylv__msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
 .ylv__msg{font-size:13px;line-height:1.4;color:var(--text-body);}
@@ -38,8 +45,8 @@ const css = `
 .ylv__statetag{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:var(--radius-pill);}
 .ylv__statetag--sold{background:var(--success-50,#e9f9f0);color:var(--success-700,#1B9E5A);}
 .ylv__statetag--deserted{background:var(--surface-sunken);color:var(--text-muted);}
-@media(max-width:1000px){.ylv{grid-template-columns:1fr;}.ylv__side{position:static;}}
-@media(max-width:600px){.ylv{padding:14px;}.ylv__chat{height:auto;max-height:55vh;}}
+@media(max-width:1000px){.ylv{flex-direction:column;height:auto;}.ylv__stage{aspect-ratio:16/9;flex:none;}.ylv__side{width:100%;height:auto;}.ylv__chat{flex:none;height:420px;}}
+@media(max-width:600px){.ylv{padding:14px;}.ylv__chat{height:auto;max-height:55vh;}.ylv__qr{display:none;}}
 
 /* ── Inmersivo (TikTok/Whatnot) — viewport angosto (≤720px) ─────────────── */
 .ylvi__root{position:fixed;inset:0;z-index:200;background:#000;overflow:hidden;}
@@ -80,19 +87,20 @@ function ensure() { if (!ic) { ic = true; const s = document.createElement('styl
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL;
 
 // Renders the seller's published camera (subscribe-only viewer).
-function Stage({ fullscreen }: { fullscreen?: boolean }) {
+// Renders just the seller's video + audio (subscribe-only). The stage wrapper
+// and overlays (badge/QR/scrim) are provided by each layout around it.
+function Stage({ offlineClass = 'ylv__offline' }: { offlineClass?: string }) {
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], { onlySubscribed: true });
   const cam = tracks.find((t) => t.publication?.kind === 'video');
   return (
-    <div className={fullscreen ? 'ylvi__stageinner' : 'ylv__stage'}>
-      {!fullscreen && <span className="ylv__livebadge"><span className="ylv__dot" /> En vivo</span>}
+    <>
       {cam ? (
         <VideoTrack trackRef={cam} />
       ) : (
-        <div className={fullscreen ? 'ylvi__stageno' : 'ylv__offline'}>Esperando el video del vendedor…</div>
+        <div className={offlineClass}>Esperando el video del vendedor…</div>
       )}
       <RoomAudioRenderer />
-    </div>
+    </>
   );
 }
 
@@ -169,6 +177,9 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
   const minNext = auction
     ? (auction.currentPrice == null ? auction.basePrice : auction.currentPrice + auction.bidIncrement)
     : 0;
+
+  // URL pública de este live para compartirlo vía QR (escanear → entrar al live).
+  const liveUrl = typeof window !== 'undefined' ? `${window.location.origin}/live/${id}` : '';
 
   // Auto-seed the bid input with the minimum next amount when the auction changes or a new bid lands.
   React.useEffect(() => {
@@ -266,7 +277,7 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
               onConnected={() => { connectedRef.current = true; }}
               onDisconnected={() => { if (connectedRef.current) setEnded(true); }}
             >
-              <Stage fullscreen />
+              <div className="ylvi__stageinner"><Stage offlineClass="ylvi__stageno" /></div>
             </LiveKitRoom>
           ) : (
             <div className="ylvi__stageno">El video no está disponible.</div>
@@ -427,19 +438,34 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
     );
   }
 
-  // ── Layout desktop (2 columnas, sin cambios) ─────────────────────────────────
+  // ── Layout desktop (video grande + sidebar) ──────────────────────────────────
   return (
-    <div>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '12px 24px 0' }}>
-        <Button className="ylv__back" variant="ghost" size="sm" onClick={onBack}
-          iconLeft={Icon.ChevronLeft ? <Icon.ChevronLeft size={16} /> : null}>Volver</Button>
-      </div>
-      <div className="ylv">
-        <div>
-          {ended ? (
-            <div className="ylv__stage">
-              <div className="ylv__offline">La transmisión finalizó.<br />¡Gracias por acompañarnos!</div>
+    <div className="ylv">
+      <div className="ylv__main">
+        <div className="ylv__stage">
+          {/* Scrim superior superpuesto: botón volver + título/vendedor */}
+          <div className="ylv__topscrim">
+            <button className="ylv__backbtn" onClick={onBack} aria-label="Volver">
+              {Icon.ChevronLeft ? <Icon.ChevronLeft size={20} /> : '‹'}
+            </button>
+            <div className="ylv__topinfo">
+              <div className="ylv__title">{detail.title}</div>
+              {detail.seller && <div className="ylv__seller">{detail.seller.name}</div>}
             </div>
+          </div>
+          {!ended && <span className="ylv__livebadge"><span className="ylv__dot" /> En vivo</span>}
+
+          {/* QR para entrar al live escaneándolo (costado izquierdo del video) */}
+          {liveUrl && (
+            <div className="ylv__qr">
+              <QRCodeSVG value={liveUrl} size={120} />
+              <span className="ylv__qrlabel">Escanea para entrar</span>
+            </div>
+          )}
+
+          {/* Contenido del video según estado */}
+          {ended ? (
+            <div className="ylv__offline">La transmisión finalizó.<br />¡Gracias por acompañarnos!</div>
           ) : LIVEKIT_URL && tk?.token ? (
             <LiveKitRoom serverUrl={tk.url || LIVEKIT_URL} token={tk.token} connect audio={false} video={false}
               onConnected={() => { connectedRef.current = true; }}
@@ -447,18 +473,13 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
               <Stage />
             </LiveKitRoom>
           ) : (
-            <div className="ylv__stage"><div className="ylv__offline">El video no está disponible.</div></div>
+            <div className="ylv__offline">El video no está disponible.</div>
           )}
-          <div className="ylv__head">
-            <div>
-              <div className="ylv__title">{detail.title}</div>
-              {detail.seller && <div className="ylv__seller">{detail.seller.name}</div>}
-            </div>
-          </div>
         </div>
+      </div>
 
-        <div className="ylv__side">
-          <div className="ylv__auction">
+      <div className="ylv__side">
+        <div className="ylv__auction">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-subtle)' }}>Subasta flash</span>
               {stateTag}
@@ -518,6 +539,5 @@ export default function LiveView({ verified, onRequireDni, onBack }: Props) {
           </div>
         </div>
       </div>
-    </div>
   );
 }
