@@ -9,21 +9,3 @@ body {
 }
 #root { min-height: 100vh; }
 a { color: inherit; text-decoration: none; }
-
-/* Navbar (.ysh): la barra queda full-width pero su contenido se alinea al mismo
-   ancho que el contenido de las páginas (--container-max), para que el logo y el
-   menú de usuario no se estiren a los extremos en pantallas anchas. El fondo y el
-   borde inferior se mueven al contenedor full-width .ysh; las filas internas se
-   centran. Selector por descendencia para ganar especificidad al bundle del DS. */
-.ysh {
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.ysh .ysh__bar,
-.ysh .ysh__nav {
-  max-width: var(--container-max);
-  width: 100%;
-  margin-inline: auto;
-  background: transparent;
-  border-bottom: none;
-}
